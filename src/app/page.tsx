@@ -1,65 +1,169 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { BookOpen, TrendingUp, Sparkles, ChevronRight } from "lucide-react";
+import { NovelCard } from "@/components/novels/novel-card";
+import { Header } from "@/components/layout/header";
+import { Footer } from "@/components/layout/footer";
+
+interface Genre {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+export default function HomePage() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [recentNovels, setRecentNovels] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [popularNovels, setPopularNovels] = useState<any[]>([]);
+  const [genres, setGenres] = useState<Genre[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/novels?sort=recent&limit=6").then(r => r.json()),
+      fetch("/api/ranking?type=likes&limit=6").then(r => r.json()),
+      fetch("/api/genres").then(r => r.json()),
+    ]).then(([recent, popular, genresData]) => {
+      setRecentNovels(recent.novels || []);
+      setPopularNovels(popular || []);
+      setGenres(genresData || []);
+      setLoading(false);
+    });
+  }, []);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="min-h-screen flex flex-col">
+      <Header />
+
+      {/* Hero Section */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 dark:from-indigo-900 dark:via-purple-900 dark:to-pink-900">
+        <div className="container mx-auto px-4 py-20 text-center text-white">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <BookOpen size={40} />
+            <h1 className="text-4xl md:text-5xl font-bold">AI小説広場</h1>
+          </div>
+          <p className="text-xl md:text-2xl opacity-90 mb-8">
+            AIが紡ぐ、無限の物語
           </p>
+          <p className="text-sm opacity-75 mb-8 max-w-xl mx-auto">
+            AIが作成した小説を投稿・閲覧できるプラットフォーム。
+            ファンタジーからSF、恋愛まで、多彩なジャンルの作品をお楽しみください。
+          </p>
+          <div className="flex items-center justify-center gap-4">
+            <Link
+              href="/novels"
+              className="px-6 py-3 rounded-lg bg-white text-purple-600 font-medium hover:bg-opacity-90 transition-all"
+            >
+              作品を読む
+            </Link>
+            <Link
+              href="/register"
+              className="px-6 py-3 rounded-lg border-2 border-white text-white font-medium hover:bg-white/10 transition-all"
+            >
+              投稿する
+            </Link>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+      </section>
+
+      <main className="flex-1 container mx-auto px-4 py-12">
+        {loading ? (
+          <div className="space-y-12">
+            {[...Array(2)].map((_, i) => (
+              <div key={i}>
+                <div className="h-8 bg-[var(--color-muted)] rounded w-1/4 mb-4" />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {[...Array(3)].map((_, j) => (
+                    <div key={j} className="h-48 bg-[var(--color-muted)] rounded-xl animate-pulse" />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <>
+            {/* Popular Novels */}
+            {popularNovels.length > 0 && (
+              <section className="mb-12">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="flex items-center gap-2 text-xl font-bold">
+                    <TrendingUp size={24} className="text-orange-500" />
+                    人気の作品
+                  </h2>
+                  <Link href="/ranking" className="flex items-center gap-1 text-sm text-[var(--color-primary)] hover:underline">
+                    もっと見る <ChevronRight size={16} />
+                  </Link>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {popularNovels.slice(0, 6).map(novel => (
+                    <NovelCard key={novel.id} novel={novel} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Recent Novels */}
+            {recentNovels.length > 0 && (
+              <section className="mb-12">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="flex items-center gap-2 text-xl font-bold">
+                    <Sparkles size={24} className="text-blue-500" />
+                    新着作品
+                  </h2>
+                  <Link href="/novels" className="flex items-center gap-1 text-sm text-[var(--color-primary)] hover:underline">
+                    もっと見る <ChevronRight size={16} />
+                  </Link>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {recentNovels.slice(0, 6).map(novel => (
+                    <NovelCard key={novel.id} novel={novel} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Genres */}
+            {genres.length > 0 && (
+              <section>
+                <h2 className="text-xl font-bold mb-4">ジャンルから探す</h2>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                  {genres.map(genre => (
+                    <Link
+                      key={genre.slug}
+                      href={`/novels?genre=${genre.slug}`}
+                      className="p-4 text-center rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] hover:shadow-md hover:border-[var(--color-primary)] transition-all"
+                    >
+                      <span className="text-sm font-medium">{genre.name}</span>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Empty state */}
+            {popularNovels.length === 0 && recentNovels.length === 0 && (
+              <div className="text-center py-16">
+                <BookOpen size={64} className="mx-auto mb-4 text-[var(--color-muted-foreground)] opacity-50" />
+                <h2 className="text-xl font-bold mb-2">まだ作品がありません</h2>
+                <p className="text-[var(--color-muted-foreground)] mb-6">
+                  最初の作品を投稿してみましょう！
+                </p>
+                <Link
+                  href="/register"
+                  className="inline-flex px-6 py-3 rounded-lg bg-[var(--color-primary)] text-white font-medium hover:opacity-90"
+                >
+                  新規登録して投稿する
+                </Link>
+              </div>
+            )}
+          </>
+        )}
       </main>
+
+      <Footer />
     </div>
   );
 }

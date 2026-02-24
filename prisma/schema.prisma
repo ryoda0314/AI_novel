@@ -1,0 +1,115 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id             String    @id @default(cuid())
+  name           String
+  email          String    @unique
+  hashedPassword String
+  bio            String?
+  avatarUrl      String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  novels         Novel[]
+  likes          Like[]
+  comments       Comment[]
+
+  @@map("users")
+}
+
+model Genre {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now())
+
+  novels    NovelGenre[]
+
+  @@map("genres")
+}
+
+model Novel {
+  id        String   @id @default(cuid())
+  title     String
+  synopsis  String
+  status    String   @default("ongoing")
+  viewCount Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  chapters  Chapter[]
+  genres    NovelGenre[]
+  likes     Like[]
+  comments  Comment[]
+
+  @@index([authorId])
+  @@index([createdAt])
+  @@index([viewCount])
+  @@map("novels")
+}
+
+model NovelGenre {
+  novelId String
+  genreId String
+  novel   Novel  @relation(fields: [novelId], references: [id], onDelete: Cascade)
+  genre   Genre  @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@id([novelId, genreId])
+  @@map("novel_genres")
+}
+
+model Chapter {
+  id          String    @id @default(cuid())
+  title       String
+  content     String
+  chapterNum  Int
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  novelId     String
+  novel       Novel     @relation(fields: [novelId], references: [id], onDelete: Cascade)
+
+  @@unique([novelId, chapterNum])
+  @@index([novelId])
+  @@map("chapters")
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  userId    String
+  novelId   String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  novel     Novel    @relation(fields: [novelId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, novelId])
+  @@map("likes")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId    String
+  novelId   String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  novel     Novel    @relation(fields: [novelId], references: [id], onDelete: Cascade)
+
+  @@index([novelId])
+  @@index([createdAt])
+  @@map("comments")
+}

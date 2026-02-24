@@ -1,26 +1,839 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: #ffffff;
+  --color-foreground: #171717;
+  --color-primary: #6366f1;
+  --color-primary-foreground: #ffffff;
+  --color-muted: #f5f5f5;
+  --color-muted-foreground: #737373;
+  --color-border: #e5e5e5;
+  --color-card: #ffffff;
+  --color-card-foreground: #171717;
+  --font-sans: "Noto Sans JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+  --font-serif: "Noto Serif JP", "Yu Mincho", "YuMincho", "Hiragino Mincho ProN", serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.dark {
+  --color-background: #0f0f23;
+  --color-foreground: #e5e5e5;
+  --color-primary: #818cf8;
+  --color-primary-foreground: #ffffff;
+  --color-muted: #1e1e3a;
+  --color-muted-foreground: #a3a3a3;
+  --color-border: #2e2e4a;
+  --color-card: #1a1a2e;
+  --color-card-foreground: #e5e5e5;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+}
+
+/* 読書ページ用スタイル */
+.reading-content {
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  line-height: 2;
+  max-width: 42em;
+  margin: 0 auto;
+  letter-spacing: 0.02em;
+}
+
+.reading-content p {
+  margin-bottom: 1.5em;
+  text-indent: 1em;
+}
+
+/* マークダウン共通スタイル */
+.markdown-body h1 {
+  font-size: 1.6em;
+  font-weight: 700;
+  margin: 1.2em 0 0.6em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.markdown-body h2 {
+  font-size: 1.35em;
+  font-weight: 700;
+  margin: 1.1em 0 0.5em;
+  padding-bottom: 0.25em;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.markdown-body h3 {
+  font-size: 1.15em;
+  font-weight: 600;
+  margin: 1em 0 0.4em;
+}
+
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+  font-size: 1em;
+  font-weight: 600;
+  margin: 0.8em 0 0.3em;
+}
+
+.markdown-body p {
+  margin-bottom: 0.8em;
+  line-height: 1.85;
+}
+
+.markdown-body strong {
+  font-weight: 700;
+}
+
+.markdown-body em {
+  font-style: italic;
+}
+
+.markdown-body del {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.markdown-body a {
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.markdown-body a:hover {
+  opacity: 0.8;
+}
+
+.markdown-body ul {
+  list-style: disc;
+  padding-left: 1.8em;
+  margin-bottom: 0.8em;
+}
+
+.markdown-body ol {
+  list-style: decimal;
+  padding-left: 1.8em;
+  margin-bottom: 0.8em;
+}
+
+.markdown-body li {
+  margin-bottom: 0.3em;
+  line-height: 1.7;
+}
+
+.markdown-body li > ul,
+.markdown-body li > ol {
+  margin-bottom: 0;
+}
+
+.markdown-body blockquote {
+  border-left: 4px solid var(--color-primary);
+  padding: 0.5em 1em;
+  margin: 0.8em 0;
+  background: var(--color-muted);
+  border-radius: 0 8px 8px 0;
+  color: var(--color-muted-foreground);
+}
+
+.markdown-body blockquote p {
+  margin-bottom: 0.3em;
+}
+
+.markdown-body code {
+  font-family: "Consolas", "Monaco", "Courier New", monospace;
+  font-size: 0.88em;
+  background: var(--color-muted);
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  border: 1px solid var(--color-border);
+}
+
+.markdown-body pre {
+  margin: 0.8em 0;
+  padding: 1em;
+  background: var(--color-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+.markdown-body pre code {
+  background: none;
+  padding: 0;
+  border: none;
+  font-size: 0.9em;
+  line-height: 1.6;
+}
+
+.markdown-body hr {
+  border: none;
+  border-top: 1px solid var(--color-border);
+  margin: 1.5em 0;
+}
+
+.markdown-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.8em 0;
+  font-size: 0.95em;
+}
+
+.markdown-body th,
+.markdown-body td {
+  border: 1px solid var(--color-border);
+  padding: 0.5em 0.8em;
+  text-align: left;
+}
+
+.markdown-body th {
+  background: var(--color-muted);
+  font-weight: 600;
+}
+
+.markdown-body img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 0.8em 0;
+}
+
+.markdown-body input[type="checkbox"] {
+  margin-right: 0.4em;
+}
+
+/* 読書ページ内のマークダウン（明朝体・字下げ調整） */
+.reading-content.markdown-body p {
+  text-indent: 1em;
+  margin-bottom: 1.5em;
+  line-height: 2;
+}
+
+.reading-content.markdown-body h1,
+.reading-content.markdown-body h2,
+.reading-content.markdown-body h3 {
+  text-indent: 0;
+  text-align: center;
+  border-bottom: none;
+}
+
+.reading-content.markdown-body blockquote p {
+  text-indent: 0;
+}
+
+.reading-content.markdown-body ul,
+.reading-content.markdown-body ol {
+  text-indent: 0;
+}
+
+/* ===== 小説独自記法スタイル ===== */
+
+/* ルビ */
+.reading-content ruby rt {
+  font-size: 0.5em;
+  font-weight: normal;
+}
+
+/* 傍点（圏点） */
+.novel-emphasis-dots {
+  text-emphasis: filled sesame;
+  -webkit-text-emphasis: filled sesame;
+  text-emphasis-position: over right;
+  -webkit-text-emphasis-position: over right;
+  text-emphasis-color: currentColor;
+  -webkit-text-emphasis-color: currentColor;
+}
+
+/* 台詞 - 字下げなし */
+.reading-content .novel-dialogue {
+  text-indent: 0 !important;
+}
+
+/* 場面転換 */
+.novel-scene-break {
+  text-align: center;
+  margin: 2.5em 0;
+  color: var(--color-muted-foreground);
+  font-size: 1.1em;
+  letter-spacing: 0.5em;
+  user-select: none;
+}
+
+/* 読書ページ内の水平線を装飾 */
+.reading-content.markdown-body hr {
+  border: none;
+  text-align: center;
+  margin: 2.5em 0;
+}
+.reading-content.markdown-body hr::after {
+  content: "＊　＊　＊";
+  color: var(--color-muted-foreground);
+  font-size: 0.9em;
+  letter-spacing: 0.3em;
+}
+
+/* 作者注 */
+.novel-author-note {
+  margin: 1.5em 0;
+  padding: 1em 1.2em;
+  border-left: 3px solid var(--color-primary);
+  background: var(--color-muted);
+  border-radius: 0 8px 8px 0;
+  font-size: 0.9em;
+}
+.novel-author-note-label {
+  font-weight: 700;
+  font-size: 0.85em;
+  color: var(--color-primary);
+  margin-bottom: 0.5em;
+  font-family: var(--font-sans);
+}
+.novel-author-note-content {
+  color: var(--color-muted-foreground);
+  line-height: 1.7;
+}
+.novel-author-note-content p {
+  margin-bottom: 0.3em;
+  text-indent: 0 !important;
+}
+
+/* メタデータパネル */
+.novel-metadata-panel {
+  margin-top: 2em;
+  border-top: 1px solid var(--color-border);
+  padding-top: 1.5em;
+}
+.novel-metadata-section {
+  margin-bottom: 1em;
+}
+.novel-metadata-section summary {
+  cursor: pointer;
+  font-weight: 700;
+  font-family: var(--font-sans);
+  padding: 0.5em 0;
+  color: var(--color-foreground);
+  list-style: disclosure-closed;
+}
+.novel-metadata-section[open] summary {
+  list-style: disclosure-open;
+}
+.novel-character-card {
+  padding: 0.8em 1em;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-card);
+}
+
+/* 用語 */
+.novel-glossary-term {
+  font-weight: 700;
+}
+.novel-glossary-reading {
+  font-size: 0.85em;
+  color: var(--color-muted-foreground);
+  margin-left: 0.5em;
+}
+
+/* タイムライン */
+.novel-timeline-entry {
+  display: flex;
+  gap: 1em;
+  padding: 0.5em 0;
+  border-left: 2px solid var(--color-border);
+  padding-left: 1em;
+  margin-left: 0.5em;
+}
+.novel-timeline-time {
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--color-primary);
+  font-size: 0.9em;
+}
+
+/* ===== :::system ブロック ===== */
+
+.novel-system {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(100, 120, 255, 0.3);
+  border-radius: 8px;
+  font-family: "Source Code Pro", "Noto Sans Mono CJK JP", "Consolas", monospace;
+  font-size: 0.85em;
+  padding: 16px 20px;
+  margin: 1.5em auto;
+  max-width: min(100%, 560px);
+  color: rgba(220, 230, 255, 0.9);
+  line-height: 1.8;
+}
+.novel-system p {
+  text-indent: 0 !important;
+  margin-bottom: 0;
+}
+
+/* type別アクセントカラー */
+.novel-system--default { border-color: rgba(100, 120, 255, 0.3); }
+.novel-system--info { border-color: rgba(96, 165, 250, 0.3); }
+.novel-system--warning { border-color: rgba(251, 191, 36, 0.3); }
+.novel-system--error { border-color: rgba(248, 113, 113, 0.3); }
+.novel-system--success { border-color: rgba(52, 211, 153, 0.3); }
+
+.novel-system--default .novel-system-header,
+.novel-system--default .novel-system-label,
+.novel-system--default .novel-system-arrow-mark { color: #818cf8; }
+.novel-system--info .novel-system-header,
+.novel-system--info .novel-system-label,
+.novel-system--info .novel-system-arrow-mark { color: #60a5fa; }
+.novel-system--warning .novel-system-header,
+.novel-system--warning .novel-system-label,
+.novel-system--warning .novel-system-arrow-mark { color: #fbbf24; }
+.novel-system--error .novel-system-header,
+.novel-system--error .novel-system-label,
+.novel-system--error .novel-system-arrow-mark { color: #f87171; }
+.novel-system--success .novel-system-header,
+.novel-system--success .novel-system-label,
+.novel-system--success .novel-system-arrow-mark { color: #34d399; }
+
+.novel-system-header {
+  font-weight: 600;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.novel-system-icon {
+  font-size: 0.9em;
+  opacity: 0.8;
+}
+.novel-system-name {
+  letter-spacing: 0.03em;
+}
+.novel-system-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.novel-system-label {
+  font-weight: 600;
+  margin-top: 8px;
+}
+.novel-system-kv {
+  display: flex;
+  gap: 0.5em;
+}
+.novel-system-key {
+  color: rgba(160, 170, 200, 0.7);
+}
+.novel-system-key::after {
+  content: ":";
+}
+.novel-system-value {
+  color: rgba(220, 230, 255, 1.0);
+}
+.novel-system-arrow {
+  color: rgba(220, 230, 255, 0.9);
+}
+.novel-system-arrow-mark {
+  font-weight: 600;
+}
+.novel-system-spacer {
+  height: 0.5em;
+}
+.novel-system-text {
+  color: rgba(220, 230, 255, 0.9);
+}
+
+/* ライトモードでも暗い背景を維持（ゲームUI感） */
+.novel-system {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* ===== :::message ブロック ===== */
+
+/* --- Chat --- */
+.novel-message--chat {
+  background: rgba(240, 240, 240, 0.6);
+  border-radius: 12px;
+  padding: 16px;
+  max-width: min(100%, 400px);
+  margin: 1.5em auto;
+}
+.dark .novel-message--chat {
+  background: #1a1a2e;
+}
+.novel-message--chat p {
+  text-indent: 0 !important;
+  margin-bottom: 0;
+}
+.novel-message-header {
+  font-size: 0.75em;
+  color: #666;
+  text-align: center;
+  margin-bottom: 12px;
+  font-family: var(--font-sans);
+}
+.dark .novel-message-header {
+  color: #999;
+}
+.novel-message-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.novel-chat-line {
+  display: flex;
+  flex-direction: column;
+  max-width: 75%;
+}
+.novel-chat-line--left {
+  align-self: flex-start;
+  align-items: flex-start;
+}
+.novel-chat-line--right {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+.novel-chat-line--center {
+  align-self: center;
+  max-width: 100%;
+}
+.novel-chat-speaker {
+  font-size: 0.75em;
+  color: #888;
+  margin-bottom: 2px;
+  font-family: var(--font-sans);
+}
+.dark .novel-chat-speaker {
+  color: #777;
+}
+.novel-chat-bubble {
+  display: inline-block;
+  padding: 8px 12px;
+  border-radius: 16px;
+  line-height: 1.5;
+  font-size: 0.9em;
+  word-break: break-word;
+}
+.novel-chat-line--left .novel-chat-bubble {
+  background: #ffffff;
+  color: #333;
+  border-radius: 2px 16px 16px 16px;
+}
+.dark .novel-chat-line--left .novel-chat-bubble {
+  background: #2a2a3e;
+  color: #e5e5e5;
+}
+.novel-chat-line--right .novel-chat-bubble {
+  background: #5b8c5a;
+  color: #fff;
+  border-radius: 16px 2px 16px 16px;
+}
+.dark .novel-chat-line--right .novel-chat-bubble {
+  background: #4a7c59;
+}
+.novel-chat-system {
+  font-size: 0.75em;
+  color: #999;
+  text-align: center;
+}
+
+/* --- Email --- */
+.novel-message--email {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  max-width: min(100%, 560px);
+  margin: 1.5em auto;
+  overflow: hidden;
+}
+.dark .novel-message--email {
+  background: #1e1e2e;
+  border-color: #2e2e4a;
+}
+.novel-message--email p {
+  text-indent: 0 !important;
+  margin-bottom: 0;
+}
+.novel-message-email-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e0e0e0;
+  background: rgba(0, 0, 0, 0.02);
+}
+.dark .novel-message-email-header {
+  border-bottom-color: #2e2e4a;
+  background: rgba(255, 255, 255, 0.02);
+}
+.novel-message-email-field {
+  font-size: 0.85em;
+  line-height: 1.6;
+}
+.novel-message-email-label {
+  color: #555;
+  font-weight: 600;
+  font-family: var(--font-sans);
+}
+.dark .novel-message-email-label {
+  color: #999;
+}
+.novel-message-email-value {
+  color: var(--color-foreground);
+}
+.novel-message-email-body {
+  padding: 16px;
+  font-family: var(--font-sans);
+  font-size: 0.9em;
+  line-height: 1.8;
+}
+.novel-message-email-text {
+  margin-bottom: 0.5em;
+}
+
+/* --- Letter --- */
+.novel-message--letter {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border: 1px solid #d4a574;
+  border-radius: 2px;
+  box-shadow: 2px 3px 8px rgba(0, 0, 0, 0.12);
+  max-width: min(100%, 480px);
+  margin: 1.5em auto;
+  overflow: hidden;
+}
+.dark .novel-message--letter {
+  background: linear-gradient(135deg, #92702a, #7c5e22);
+  border-color: #a67c52;
+}
+.novel-message--letter p {
+  text-indent: 0 !important;
+  margin-bottom: 0;
+}
+.novel-message-letter-body {
+  padding: 24px 28px;
+}
+.novel-message-letter-text {
+  font-family: var(--font-serif);
+  color: #5c4033;
+  line-height: 2.0;
+  margin-bottom: 0.3em;
+}
+.dark .novel-message-letter-text {
+  color: #e8d5b7;
+}
+
+/* --- Telepathy --- */
+.novel-message--telepathy {
+  background: rgba(88, 28, 135, 0.15);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  border-radius: 8px;
+  padding: 16px 20px;
+  max-width: min(100%, 480px);
+  margin: 1.5em auto;
+}
+.dark .novel-message--telepathy {
+  background: rgba(88, 28, 135, 0.25);
+}
+.novel-message--telepathy p {
+  text-indent: 0 !important;
+  margin-bottom: 0;
+}
+.novel-telepathy-line {
+  margin-bottom: 6px;
+  display: flex;
+  flex-direction: column;
+}
+.novel-telepathy-line--left {
+  align-items: flex-start;
+}
+.novel-telepathy-line--right {
+  align-items: flex-end;
+}
+.novel-telepathy-speaker {
+  font-size: 0.75em;
+  color: #a855f7;
+  margin-bottom: 2px;
+  font-family: var(--font-sans);
+}
+.novel-telepathy-text {
+  color: #c084fc;
+  font-style: italic;
+  line-height: 1.8;
+  text-shadow: 0 0 12px rgba(168, 85, 247, 0.3);
+}
+.dark .novel-telepathy-text {
+  text-shadow: 0 0 16px rgba(168, 85, 247, 0.5);
+}
+
+/* ===== :::code ブロック ===== */
+
+.novel-code {
+  background: #1e1e2e;
+  border-radius: 8px;
+  margin: 1.5em auto;
+  max-width: min(100%, 560px);
+  overflow: hidden;
+  font-size: 0.85em;
+}
+.novel-code p {
+  text-indent: 0 !important;
+  margin-bottom: 0;
+}
+.novel-code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.novel-code-title-text {
+  color: #e2e8f0;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  font-size: 0.9em;
+}
+.novel-code-lang {
+  color: #64748b;
+  font-size: 0.85em;
+  font-family: "Fira Code", "Source Code Pro", "Consolas", monospace;
+}
+.novel-code-pre {
+  margin: 0;
+  padding: 16px;
+  overflow-x: auto;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+}
+.novel-code-body {
+  font-family: "Fira Code", "Source Code Pro", "Consolas", monospace;
+  font-size: 1em;
+  line-height: 1.7;
+  color: #e2e8f0;
+  background: transparent !important;
+  padding: 0 !important;
+  border: none !important;
+}
+.novel-code-line {
+  display: flex;
+  padding: 0 4px;
+}
+.novel-code-line--highlight {
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 2px;
+}
+.novel-code-line-number {
+  color: #4a5568;
+  padding-right: 16px;
+  text-align: right;
+  user-select: none;
+  min-width: 2em;
+  flex-shrink: 0;
+}
+.novel-code-line-content {
+  white-space: pre;
+}
+
+/* spell言語トークンカラー */
+.novel-spell-keyword { color: #c084fc; }
+.novel-spell-type { color: #60a5fa; }
+.novel-spell-element { color: #fb923c; }
+.novel-spell-operator { color: #f472b6; }
+.novel-spell-number { color: #34d399; }
+.novel-spell-constant { color: #fbbf24; }
+.novel-spell-comment { color: #64748b; font-style: italic; }
+.novel-spell-punctuation { color: #94a3b8; }
+
+/* ===== 拡張ブロック: reading-content内の字下げ無効化 ===== */
+
+.reading-content .novel-system p,
+.reading-content .novel-message--chat p,
+.reading-content .novel-message--email p,
+.reading-content .novel-message--letter p,
+.reading-content .novel-message--telepathy p,
+.reading-content .novel-code p {
+  text-indent: 0 !important;
+  margin-bottom: 0;
+}
+
+/* ===== 拡張ブロック: モバイル対応 ===== */
+
+@media (max-width: 480px) {
+  .novel-system,
+  .novel-message--chat,
+  .novel-message--email,
+  .novel-message--letter,
+  .novel-message--telepathy,
+  .novel-code {
+    max-width: 100%;
+    border-radius: 6px;
+  }
+  .novel-system {
+    padding: 12px 14px;
+    font-size: 0.8em;
+  }
+  .novel-message-letter-body {
+    padding: 16px 18px;
+  }
+}
+
+/* ===== 縦書きモード ===== */
+.reading-vertical {
+  writing-mode: vertical-rl;
+  -webkit-writing-mode: vertical-rl;
+  text-orientation: mixed;
+  -webkit-text-orientation: mixed;
+  min-height: 70vh;
+  max-height: 80vh;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 2em 1em;
+}
+
+.reading-vertical p {
+  margin-bottom: 0;
+  margin-left: 1.5em;
+}
+
+/* 縦書きでの傍点位置 */
+.reading-vertical .novel-emphasis-dots {
+  text-emphasis-position: right;
+  -webkit-text-emphasis-position: over right;
+}
+
+/* 縦書きでの場面転換 */
+.reading-vertical .novel-scene-break {
+  writing-mode: horizontal-tb;
+  margin: 0 2em;
+  width: auto;
+}
+
+/* 縦書きでの拡張ブロック（常に横書き） */
+.reading-vertical .novel-system,
+.reading-vertical .novel-message--chat,
+.reading-vertical .novel-message--email,
+.reading-vertical .novel-message--letter,
+.reading-vertical .novel-message--telepathy,
+.reading-vertical .novel-code {
+  writing-mode: horizontal-tb;
+  margin: 0 2em;
+}
+
+/* 縦書き用スクロールバー */
+.reading-vertical::-webkit-scrollbar {
+  height: 6px;
+  width: auto;
+}
+
+/* スクロールバー */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-muted);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
 }
