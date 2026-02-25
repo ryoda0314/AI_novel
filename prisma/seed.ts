@@ -1,13 +1,6 @@
-import { createClient } from "@libsql/client";
-import path from "path";
-import { randomBytes } from "crypto";
+import { PrismaClient } from "../src/generated/prisma/client";
 
-const dbPath = path.resolve(process.cwd(), "dev.db");
-const db = createClient({ url: `file:${dbPath}` });
-
-function cuid() {
-  return randomBytes(16).toString("hex").slice(0, 25);
-}
+const prisma = new PrismaClient();
 
 const genres = [
   { name: "ファンタジー", slug: "fantasy" },
@@ -26,16 +19,11 @@ const genres = [
 
 async function main() {
   for (const genre of genres) {
-    const existing = await db.execute({
-      sql: "SELECT id FROM genres WHERE slug = ?",
-      args: [genre.slug],
+    await prisma.genre.upsert({
+      where: { slug: genre.slug },
+      update: {},
+      create: { name: genre.name, slug: genre.slug },
     });
-    if (existing.rows.length === 0) {
-      await db.execute({
-        sql: "INSERT INTO genres (id, name, slug, createdAt) VALUES (?, ?, ?, datetime('now'))",
-        args: [cuid(), genre.name, genre.slug],
-      });
-    }
   }
   console.log("ジャンルのシードデータを投入しました");
 }
@@ -45,4 +33,4 @@ main()
     console.error(e);
     process.exit(1);
   })
-  .finally(() => db.close());
+  .finally(() => prisma.$disconnect());
