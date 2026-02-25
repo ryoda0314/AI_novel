@@ -5,6 +5,7 @@ import { NovelInlineText } from "@/components/novel/novel-inline-text";
 
 interface NovelCardProps {
   id: string;
+  serialNumber: number;
   title: string;
   synopsis: string;
   status: string;
@@ -21,6 +22,7 @@ export function NovelCard({ novel }: { novel: NovelCardProps }) {
       <div className="h-full p-5 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] hover:shadow-md transition-shadow">
         <div className="flex items-start justify-between gap-2 mb-2">
           <h3 className="font-bold text-lg group-hover:text-[var(--color-primary)] transition-colors line-clamp-2">
+            <span className="text-sm text-[var(--color-muted-foreground)] font-normal mr-1.5">#{novel.serialNumber}</span>
             <NovelInlineText text={novel.title} />
           </h3>
           <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full ${getStatusColor(novel.status)}`}>

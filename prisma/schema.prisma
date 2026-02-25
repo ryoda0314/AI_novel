@@ -36,13 +36,14 @@ model Genre {
 }
 
 model Novel {
-  id        String   @id @default(cuid())
-  title     String
-  synopsis  String
-  status    String   @default("ongoing")
-  viewCount Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(cuid())
+  serialNumber Int      @unique @default(autoincrement())
+  title        String
+  synopsis     String
+  status       String   @default("ongoing")
+  viewCount    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   authorId  String
   author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)

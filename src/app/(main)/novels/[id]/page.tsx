@@ -12,6 +12,7 @@ import { NovelInlineText } from "@/components/novel/novel-inline-text";
 
 interface Novel {
   id: string;
+  serialNumber: number;
   title: string;
   synopsis: string;
   status: string;
@@ -67,7 +68,10 @@ export default function NovelDetailPage() {
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-start justify-between gap-4 mb-3">
-          <h1 className="text-3xl font-bold"><NovelInlineText text={novel.title} /></h1>
+          <h1 className="text-3xl font-bold">
+            <span className="text-lg text-[var(--color-muted-foreground)] font-normal mr-2">#{novel.serialNumber}</span>
+            <NovelInlineText text={novel.title} />
+          </h1>
           <span className={`shrink-0 text-sm px-3 py-1 rounded-full ${getStatusColor(novel.status)}`}>
             {getStatusLabel(novel.status)}
           </span>
