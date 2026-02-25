@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
+import { notifyFollowers } from "@/lib/notifications";
 
 export async function GET(
   _request: Request,
@@ -8,7 +9,7 @@ export async function GET(
 ) {
   const { id } = await params;
   const chapters = await prisma.chapter.findMany({
-    where: { novelId: id, publishedAt: { not: null } },
+    where: { novelId: id, publishedAt: { not: null, lte: new Date() } },
     orderBy: { chapterNum: "asc" },
     select: { id: true, title: true, chapterNum: true, publishedAt: true, createdAt: true },
   });
@@ -32,7 +33,7 @@ export async function POST(
     return NextResponse.json({ error: "権限がありません" }, { status: 403 });
   }
 
-  const { title, content, publish } = await request.json();
+  const { title, content, publish, scheduledAt } = await request.json();
 
   if (!title || !content) {
     return NextResponse.json({ error: "タイトルと本文は必須です" }, { status: 400 });
@@ -46,15 +47,32 @@ export async function POST(
 
   const chapterNum = (lastChapter?.chapterNum || 0) + 1;
 
+  let publishedAt: Date | null = null;
+  if (scheduledAt) {
+    publishedAt = new Date(scheduledAt);
+  } else if (publish) {
+    publishedAt = new Date();
+  }
+
   const chapter = await prisma.chapter.create({
     data: {
       title,
       content,
       chapterNum,
       novelId: id,
-      publishedAt: publish ? new Date() : null,
+      publishedAt,
     },
   });
+
+  // 公開時にフォロワーへ通知
+  if (publishedAt && publishedAt <= new Date()) {
+    notifyFollowers(
+      session.user.id,
+      "new_chapter",
+      `「${novel.title}」に第${chapterNum}話「${title}」が公開されました`,
+      `/novels/${id}/chapters/${chapter.id}`
+    ).catch(() => {});
+  }
 
   return NextResponse.json(chapter, { status: 201 });
 }

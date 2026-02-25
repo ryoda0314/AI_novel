@@ -2,10 +2,13 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { BookOpen, TrendingUp, Sparkles, ChevronRight } from "lucide-react";
+import { BookOpen, TrendingUp, Sparkles, ChevronRight, History } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { NovelCard } from "@/components/novels/novel-card";
+import { NovelInlineText } from "@/components/novel/novel-inline-text";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { formatRelativeTime } from "@/lib/utils";
 
 interface Genre {
   id: string;
@@ -13,12 +16,30 @@ interface Genre {
   slug: string;
 }
 
+interface ReadingHistoryItem {
+  id: string;
+  readAt: string;
+  novel: {
+    id: string;
+    title: string;
+    author: { id: string; name: string };
+    _count: { chapters: number };
+  };
+  chapter: {
+    id: string;
+    title: string;
+    chapterNum: number;
+  };
+}
+
 export default function HomePage() {
+  const { data: session } = useSession();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [recentNovels, setRecentNovels] = useState<any[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [popularNovels, setPopularNovels] = useState<any[]>([]);
   const [genres, setGenres] = useState<Genre[]>([]);
+  const [readingHistory, setReadingHistory] = useState<ReadingHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -33,6 +54,15 @@ export default function HomePage() {
       setLoading(false);
     });
   }, []);
+
+  // ログインユーザーの読書履歴を取得
+  useEffect(() => {
+    if (!session?.user) return;
+    fetch("/api/reading-history?limit=6")
+      .then(r => r.json())
+      .then((data) => setReadingHistory(data || []))
+      .catch(() => {});
+  }, [session]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -85,6 +115,38 @@ export default function HomePage() {
           </div>
         ) : (
           <>
+            {/* Continue Reading */}
+            {readingHistory.length > 0 && (
+              <section className="mb-12">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="flex items-center gap-2 text-xl font-bold">
+                    <History size={24} className="text-green-500" />
+                    続きを読む
+                  </h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {readingHistory.map((item) => (
+                    <Link
+                      key={item.id}
+                      href={`/novels/${item.novel.id}/chapters/${item.chapter.id}`}
+                      className="block p-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] hover:shadow-md transition-shadow"
+                    >
+                      <h3 className="font-bold mb-1 line-clamp-1">
+                        <NovelInlineText text={item.novel.title} />
+                      </h3>
+                      <p className="text-sm text-[var(--color-primary)] mb-2">
+                        第{item.chapter.chapterNum}話: <NovelInlineText text={item.chapter.title} />
+                      </p>
+                      <div className="flex items-center justify-between text-xs text-[var(--color-muted-foreground)]">
+                        <span>{item.novel.author.name}</span>
+                        <span>{formatRelativeTime(item.readAt)}</span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
+
             {/* Popular Novels */}
             {popularNovels.length > 0 && (
               <section className="mb-12">

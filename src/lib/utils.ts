@@ -46,6 +46,17 @@ export function getStatusLabel(status: string): string {
   }
 }
 
+/** 文字数から推定読了時間を返す（日本語: 約500文字/分） */
+export function estimateReadingTime(charCount: number): string {
+  const minutes = Math.ceil(charCount / 500);
+  if (minutes < 1) return "1分未満";
+  if (minutes < 60) return `約${minutes}分`;
+  const hours = Math.floor(minutes / 60);
+  const remaining = minutes % 60;
+  if (remaining === 0) return `約${hours}時間`;
+  return `約${hours}時間${remaining}分`;
+}
+
 export function getStatusColor(status: string): string {
   switch (status) {
     case "ongoing":

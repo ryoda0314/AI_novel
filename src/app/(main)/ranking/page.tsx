@@ -3,12 +3,19 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { NovelCard } from "@/components/novels/novel-card";
-import { Trophy } from "lucide-react";
+import { Trophy, Star } from "lucide-react";
 
-const tabs = [
-  { key: "likes", label: "いいね数順" },
+const typeTabs = [
+  { key: "votes", label: "いいね投票" },
+  { key: "rating", label: "評価順" },
   { key: "views", label: "閲覧数順" },
   { key: "recent", label: "新着順" },
+];
+
+const periodTabs = [
+  { key: "weekly", label: "週間" },
+  { key: "monthly", label: "月間" },
+  { key: "all", label: "総合" },
 ];
 
 export default function RankingPage() {
@@ -26,15 +33,22 @@ function RankingContent() {
   const [novels, setNovels] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const type = searchParams.get("type") || "likes";
+  const type = searchParams.get("type") || "votes";
+  const period = searchParams.get("period") || "weekly";
 
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/ranking?type=${type}`)
+    fetch(`/api/ranking?type=${type}&period=${period}`)
       .then(r => r.json())
       .then(setNovels)
       .finally(() => setLoading(false));
-  }, [type]);
+  }, [type, period]);
+
+  const updateParams = (updates: Record<string, string>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    Object.entries(updates).forEach(([k, v]) => params.set(k, v));
+    router.push(`/ranking?${params.toString()}`);
+  };
 
   return (
     <div>
@@ -43,12 +57,12 @@ function RankingContent() {
         <h1 className="text-2xl font-bold">ランキング</h1>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 mb-6 border-b border-[var(--color-border)]">
-        {tabs.map((tab) => (
+      {/* Type Tabs */}
+      <div className="flex gap-1 mb-4 border-b border-[var(--color-border)]">
+        {typeTabs.map((tab) => (
           <button
             key={tab.key}
-            onClick={() => router.push(`/ranking?type=${tab.key}`)}
+            onClick={() => updateParams({ type: tab.key })}
             className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
               type === tab.key
                 ? "border-[var(--color-primary)] text-[var(--color-primary)]"
@@ -59,6 +73,25 @@ function RankingContent() {
           </button>
         ))}
       </div>
+
+      {/* Period Tabs (votes/views のみ) */}
+      {(type === "votes" || type === "views") && (
+        <div className="flex gap-1 mb-6">
+          {periodTabs.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => updateParams({ period: tab.key })}
+              className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
+                period === tab.key
+                  ? "bg-[var(--color-primary)] text-white"
+                  : "bg-[var(--color-muted)] text-[var(--color-muted-foreground)] hover:bg-[var(--color-border)]"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {loading ? (
         <div className="space-y-4">
@@ -80,12 +113,24 @@ function RankingContent() {
               </div>
               <div className="flex-1">
                 <NovelCard novel={novel} />
+                {/* 追加情報 */}
+                {novel.periodLikes !== undefined && (
+                  <p className="text-xs text-[var(--color-muted-foreground)] mt-1 ml-1">
+                    期間内いいね: {novel.periodLikes}
+                  </p>
+                )}
+                {novel.averageRating !== undefined && (
+                  <p className="flex items-center gap-1 text-xs text-amber-500 mt-1 ml-1">
+                    <Star size={12} className="fill-amber-400" />
+                    {novel.averageRating} ({novel._count?.reviews || 0}件のレビュー)
+                  </p>
+                )}
               </div>
             </div>
           ))}
           {novels.length === 0 && (
             <p className="text-center py-16 text-[var(--color-muted-foreground)]">
-              まだ作品がありません
+              {type === "rating" ? "レビューが3件以上の作品がまだありません" : "まだ作品がありません"}
             </p>
           )}
         </div>

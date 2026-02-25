@@ -13,13 +13,13 @@ export async function GET(
 
   const [comments, total] = await Promise.all([
     prisma.comment.findMany({
-      where: { novelId: id },
+      where: { novelId: id, chapterId: null },
       include: { user: { select: { id: true, name: true } } },
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * limit,
       take: limit,
     }),
-    prisma.comment.count({ where: { novelId: id } }),
+    prisma.comment.count({ where: { novelId: id, chapterId: null } }),
   ]);
 
   return NextResponse.json({ comments, total, page, totalPages: Math.ceil(total / limit) });

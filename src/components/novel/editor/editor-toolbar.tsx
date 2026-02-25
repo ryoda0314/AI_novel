@@ -1,7 +1,7 @@
 "use client";
 
 import { toolbarActions } from "./toolbar-buttons";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Sparkles } from "lucide-react";
 
 interface EditorToolbarProps {
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
@@ -9,6 +9,8 @@ interface EditorToolbarProps {
   onChange: (value: string) => void;
   showPreview: boolean;
   onTogglePreview: () => void;
+  showAi: boolean;
+  onToggleAi: () => void;
 }
 
 export function EditorToolbar({
@@ -17,6 +19,8 @@ export function EditorToolbar({
   onChange,
   showPreview,
   onTogglePreview,
+  showAi,
+  onToggleAi,
 }: EditorToolbarProps) {
   return (
     <div className="flex items-center gap-1 flex-wrap px-1 py-1.5 border-b border-[var(--color-border)] bg-[var(--color-muted)]  rounded-t-lg">
@@ -38,6 +42,20 @@ export function EditorToolbar({
       ))}
 
       <div className="flex-1" />
+
+      <button
+        type="button"
+        onClick={onToggleAi}
+        className={`flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded transition-colors ${
+          showAi
+            ? "bg-violet-500 text-white"
+            : "text-violet-600 dark:text-violet-400 hover:bg-violet-500/10"
+        }`}
+        title="AI執筆支援"
+      >
+        <Sparkles size={12} />
+        AI
+      </button>
 
       <button
         type="button"

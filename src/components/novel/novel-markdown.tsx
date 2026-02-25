@@ -14,6 +14,7 @@ import { SceneBreak } from "./scene-break";
 interface NovelMarkdownProps {
   content: string;
   className?: string;
+  style?: React.CSSProperties;
   showMetadata?: boolean;
 }
 
@@ -25,6 +26,7 @@ const novelComponents: Record<string, any> = {
 export function NovelMarkdown({
   content,
   className,
+  style,
   showMetadata = true,
 }: NovelMarkdownProps) {
   const { processedMarkdown, metadata, notes, blocks } = useMemo(
@@ -40,7 +42,7 @@ export function NovelMarkdown({
 
   return (
     <>
-      <div className={className}>
+      <div className={className} style={style}>
         <ReactMarkdown
           remarkPlugins={[remarkGfm, remarkBreaks, remarkMath]}
           rehypePlugins={[rehypeKatex, [rehypeNovelMarkup, { notes, blocks }]]}

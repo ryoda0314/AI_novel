@@ -6,6 +6,7 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string; chapterId: string }> }
 ) {
+  const session = await auth();
   const { id, chapterId } = await params;
   const chapter = await prisma.chapter.findFirst({
     where: { id: chapterId, novelId: id },
@@ -17,6 +18,11 @@ export async function GET(
   });
 
   if (!chapter) {
+    return NextResponse.json({ error: "話が見つかりません" }, { status: 404 });
+  }
+
+  // 予約公開の章は作者のみアクセス可能
+  if (chapter.publishedAt && chapter.publishedAt > new Date() && chapter.novel.authorId !== session?.user?.id) {
     return NextResponse.json({ error: "話が見つかりません" }, { status: 404 });
   }
 
@@ -39,14 +45,21 @@ export async function PUT(
     return NextResponse.json({ error: "権限がありません" }, { status: 403 });
   }
 
-  const { title, content, publish } = await request.json();
+  const { title, content, publish, scheduledAt } = await request.json();
+
+  let publishedAtUpdate: Date | null | undefined = undefined;
+  if (scheduledAt !== undefined) {
+    publishedAtUpdate = scheduledAt ? new Date(scheduledAt) : null;
+  } else if (publish !== undefined) {
+    publishedAtUpdate = publish ? new Date() : null;
+  }
 
   const chapter = await prisma.chapter.update({
     where: { id: chapterId },
     data: {
       ...(title && { title }),
       ...(content && { content }),
-      ...(publish !== undefined && { publishedAt: publish ? new Date() : null }),
+      ...(publishedAtUpdate !== undefined && { publishedAt: publishedAtUpdate }),
     },
   });
 

@@ -13,6 +13,7 @@ interface NovelCardProps {
   createdAt: string;
   author: { id: string; name: string };
   genres: { genre: { name: string; slug: string } }[];
+  tags?: { tag: { id: string; name: string } }[];
   _count: { likes: number; chapters: number };
 }
 
@@ -34,7 +35,7 @@ export function NovelCard({ novel }: { novel: NovelCardProps }) {
           {truncate(novel.synopsis, 100)}
         </p>
 
-        {novel.genres.length > 0 && (
+        {(novel.genres.length > 0 || (novel.tags && novel.tags.length > 0)) && (
           <div className="flex flex-wrap gap-1 mb-3">
             {novel.genres.slice(0, 3).map(({ genre }) => (
               <span
@@ -44,6 +45,19 @@ export function NovelCard({ novel }: { novel: NovelCardProps }) {
                 {genre.name}
               </span>
             ))}
+            {novel.tags?.slice(0, 3).map(({ tag }) => (
+              <span
+                key={tag.id}
+                className="text-xs px-2 py-0.5 rounded-full border border-[var(--color-primary)]/30 text-[var(--color-primary)]"
+              >
+                #{tag.name}
+              </span>
+            ))}
+            {(novel.tags?.length ?? 0) > 3 && (
+              <span className="text-xs px-2 py-0.5 text-[var(--color-muted-foreground)]">
+                +{(novel.tags?.length ?? 0) - 3}
+              </span>
+            )}
           </div>
         )}
 

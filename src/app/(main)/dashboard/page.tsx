@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { Plus, Edit, Trash2, Heart, Eye, BookOpen } from "lucide-react";
+import { Plus, Edit, Trash2, Heart, Eye, BookOpen, BarChart3, Library } from "lucide-react";
 import { getStatusLabel, getStatusColor, formatDate } from "@/lib/utils";
 import { NovelInlineText } from "@/components/novel/novel-inline-text";
 
@@ -42,13 +42,29 @@ export default function DashboardPage() {
     <div className="max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">マイ作品</h1>
-        <Link
-          href="/novels/new"
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white hover:opacity-90 transition-opacity text-sm font-medium"
-        >
-          <Plus size={16} />
-          新しい小説を作成
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/dashboard/series"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-muted)] transition-colors text-sm"
+          >
+            <Library size={16} />
+            シリーズ
+          </Link>
+          <Link
+            href="/dashboard/analytics"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-muted)] transition-colors text-sm"
+          >
+            <BarChart3 size={16} />
+            アクセス解析
+          </Link>
+          <Link
+            href="/novels/new"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white hover:opacity-90 transition-opacity text-sm font-medium"
+          >
+            <Plus size={16} />
+            新しい小説を作成
+          </Link>
+        </div>
       </div>
 
       {loading ? (

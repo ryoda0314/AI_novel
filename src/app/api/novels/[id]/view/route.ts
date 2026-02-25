@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { incrementDailyViews } from "@/lib/daily-stats";
 import { NextResponse } from "next/server";
 
 export async function POST(
@@ -11,6 +12,8 @@ export async function POST(
     where: { id },
     data: { viewCount: { increment: 1 } },
   });
+
+  incrementDailyViews(id).catch(() => {});
 
   return NextResponse.json({ success: true });
 }

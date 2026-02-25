@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { TagInput } from "@/components/ui/tag-input";
 
 interface Genre {
   id: string;
@@ -9,18 +11,34 @@ interface Genre {
   slug: string;
 }
 
+interface SeriesOption {
+  id: string;
+  title: string;
+}
+
 export default function NewNovelPage() {
   const router = useRouter();
+  const { data: session } = useSession();
   const [title, setTitle] = useState("");
   const [synopsis, setSynopsis] = useState("");
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+  const [tags, setTags] = useState<string[]>([]);
+  const [seriesId, setSeriesId] = useState("");
   const [genres, setGenres] = useState<Genre[]>([]);
+  const [seriesList, setSeriesList] = useState<SeriesOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
     fetch("/api/genres").then(r => r.json()).then(setGenres);
   }, []);
+
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    fetch(`/api/series?authorId=${session.user.id}`)
+      .then(r => r.json())
+      .then((data: SeriesOption[]) => setSeriesList(data));
+  }, [session?.user?.id]);
 
   const toggleGenre = (id: string) => {
     setSelectedGenres(prev =>
@@ -47,6 +65,8 @@ export default function NewNovelPage() {
           title: title.trim(),
           synopsis: synopsis.trim(),
           genreIds: selectedGenres,
+          tags,
+          seriesId: seriesId || undefined,
         }),
       });
 
@@ -116,6 +136,30 @@ export default function NewNovelPage() {
             ))}
           </div>
         </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2">タグ（最大10個）</label>
+          <TagInput value={tags} onChange={setTags} />
+          <p className="text-xs text-[var(--color-muted-foreground)] mt-1">
+            異世界転生、チート、ダークファンタジーなど自由に入力できます
+          </p>
+        </div>
+
+        {seriesList.length > 0 && (
+          <div>
+            <label className="block text-sm font-medium mb-1">シリーズ（任意）</label>
+            <select
+              value={seriesId}
+              onChange={(e) => setSeriesId(e.target.value)}
+              className="px-3 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] text-sm"
+            >
+              <option value="">なし</option>
+              {seriesList.map(s => (
+                <option key={s.id} value={s.id}>{s.title}</option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <div className="flex gap-3">
           <button

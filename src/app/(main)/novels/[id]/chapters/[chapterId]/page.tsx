@@ -1,12 +1,19 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, List } from "lucide-react";
+import { ChevronLeft, ChevronRight, List, Clock } from "lucide-react";
 import { NovelMarkdown } from "@/components/novel/novel-markdown";
 import { NovelInlineText } from "@/components/novel/novel-inline-text";
-import { ReadingModeToggle } from "@/components/novel/reading-mode-toggle";
+import { estimateReadingTime } from "@/lib/utils";
+import {
+  ReadingSettingsPanel,
+  useReadingSettings,
+  getReadingStyle,
+} from "@/components/novel/reading-settings";
+import { ChapterSidebar } from "@/components/novel/chapter-sidebar";
+import { CommentSection } from "@/components/interactions/comment-section";
 
 interface Chapter {
   id: string;
@@ -27,10 +34,8 @@ export default function ChapterReadingPage() {
   const [chapter, setChapter] = useState<Chapter | null>(null);
   const [allChapters, setAllChapters] = useState<NavChapter[]>([]);
   const [loading, setLoading] = useState(true);
-  const [readingMode, setReadingMode] = useState<"horizontal" | "vertical">("horizontal");
-  const handleModeChange = useCallback((mode: "horizontal" | "vertical") => {
-    setReadingMode(mode);
-  }, []);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { settings, setSettings } = useReadingSettings();
 
   useEffect(() => {
     if (!params.id || !params.chapterId) return;
@@ -43,6 +48,13 @@ export default function ChapterReadingPage() {
       setAllChapters(chaptersData);
       setLoading(false);
       window.scrollTo(0, 0);
+
+      // 読書履歴を記録
+      fetch("/api/reading-history", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ novelId: params.id, chapterId: params.chapterId }),
+      }).catch(() => {});
     });
   }, [params.id, params.chapterId]);
 
@@ -70,6 +82,16 @@ export default function ChapterReadingPage() {
 
   return (
     <div className="max-w-3xl mx-auto">
+      {/* 目次サイドバー */}
+      <ChapterSidebar
+        novelId={chapter.novel.id}
+        novelTitle={chapter.novel.title}
+        chapters={allChapters}
+        currentChapterId={chapter.id}
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
+
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-[var(--color-muted-foreground)] mb-6">
         <Link href={`/novels/${chapter.novel.id}`} className="hover:text-[var(--color-primary)]">
@@ -79,7 +101,7 @@ export default function ChapterReadingPage() {
         <span>第{chapter.chapterNum}話</span>
       </div>
 
-      {/* Chapter Header + Reading Mode Toggle */}
+      {/* Chapter Header + Reading Settings */}
       <div className="flex items-start justify-between mb-10">
         <div className="text-center flex-1">
           <p className="text-sm text-[var(--color-muted-foreground)] mb-2">
@@ -89,14 +111,21 @@ export default function ChapterReadingPage() {
           <p className="text-sm text-[var(--color-muted-foreground)] mt-2">
             {chapter.novel.author.name}
           </p>
+          <p className="flex items-center justify-center gap-1 text-xs text-[var(--color-muted-foreground)] mt-1">
+            <Clock size={12} />
+            {estimateReadingTime(chapter.content.length)}
+            <span className="mx-1">|</span>
+            {chapter.content.length.toLocaleString()}文字
+          </p>
         </div>
-        <ReadingModeToggle onChange={handleModeChange} />
+        <ReadingSettingsPanel settings={settings} onChange={setSettings} />
       </div>
 
       {/* Content */}
       <NovelMarkdown
         content={chapter.content}
-        className={`reading-content markdown-body mb-12 ${readingMode === "vertical" ? "reading-vertical" : ""}`}
+        className={`reading-content markdown-body mb-12 ${settings.mode === "vertical" ? "reading-vertical" : ""}`}
+        style={getReadingStyle(settings)}
       />
 
       {/* Navigation */}
@@ -114,13 +143,13 @@ export default function ChapterReadingPage() {
             <div />
           )}
 
-          <Link
-            href={`/novels/${chapter.novel.id}`}
+          <button
+            onClick={() => setSidebarOpen(true)}
             className="flex items-center gap-1 px-4 py-2 rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-muted)] transition-colors text-sm"
           >
             <List size={16} />
             目次
-          </Link>
+          </button>
 
           {nextChapter ? (
             <Link
@@ -135,6 +164,11 @@ export default function ChapterReadingPage() {
           )}
         </div>
       </div>
+
+      {/* Chapter Comments */}
+      <section className="mt-8 pt-8 border-t border-[var(--color-border)]">
+        <CommentSection novelId={chapter.novel.id} chapterId={chapter.id} />
+      </section>
     </div>
   );
 }

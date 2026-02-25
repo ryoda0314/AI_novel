@@ -17,9 +17,16 @@ model User {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
-  novels         Novel[]
-  likes          Like[]
-  comments       Comment[]
+  novels           Novel[]
+  series           Series[]
+  likes            Like[]
+  bookmarks        Bookmark[]
+  readingHistories ReadingHistory[]
+  comments         Comment[]
+  reviews          Review[]
+  followers        Follow[]       @relation("following")
+  following        Follow[]       @relation("follower")
+  notifications    Notification[]
 
   @@map("users")
 }
@@ -45,15 +52,25 @@ model Novel {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  authorId  String
-  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId    String
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  seriesId    String?
+  seriesOrder Int?
+  series      Series?  @relation(fields: [seriesId], references: [id], onDelete: SetNull)
 
   chapters  Chapter[]
   genres    NovelGenre[]
-  likes     Like[]
-  comments  Comment[]
+  tags      NovelTag[]
+  likes            Like[]
+  bookmarks        Bookmark[]
+  readingHistories ReadingHistory[]
+  comments         Comment[]
+  reviews          Review[]
+  dailyStats       DailyStats[]
+  contestEntries   ContestEntry[]
 
   @@index([authorId])
+  @@index([seriesId])
   @@index([createdAt])
   @@index([viewCount])
   @@map("novels")
@@ -69,17 +86,55 @@ model NovelGenre {
   @@map("novel_genres")
 }
 
-model Chapter {
-  id          String    @id @default(cuid())
-  title       String
-  content     String
-  chapterNum  Int
-  publishedAt DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+model Tag {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  createdAt DateTime   @default(now())
 
-  novelId     String
-  novel       Novel     @relation(fields: [novelId], references: [id], onDelete: Cascade)
+  novels    NovelTag[]
+
+  @@map("tags")
+}
+
+model NovelTag {
+  novelId String
+  tagId   String
+  novel   Novel  @relation(fields: [novelId], references: [id], onDelete: Cascade)
+  tag     Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([novelId, tagId])
+  @@map("novel_tags")
+}
+
+model Series {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  authorId    String
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  novels      Novel[]
+
+  @@index([authorId])
+  @@map("series")
+}
+
+model Chapter {
+  id           String    @id @default(cuid())
+  title        String
+  content      String
+  chapterNum   Int
+  publishedAt  DateTime?
+  previewToken String?   @unique
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  novelId          String
+  novel            Novel     @relation(fields: [novelId], references: [id], onDelete: Cascade)
+  readingHistories ReadingHistory[]
+  comments         Comment[]
 
   @@unique([novelId, chapterNum])
   @@index([novelId])
@@ -99,8 +154,54 @@ model Like {
   @@map("likes")
 }
 
-model Comment {
+model Bookmark {
   id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  userId    String
+  novelId   String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  novel     Novel    @relation(fields: [novelId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, novelId])
+  @@map("bookmarks")
+}
+
+model ReadingHistory {
+  id        String   @id @default(cuid())
+  readAt    DateTime @default(now()) @updatedAt
+
+  userId    String
+  novelId   String
+  chapterId String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  novel     Novel    @relation(fields: [novelId], references: [id], onDelete: Cascade)
+  chapter   Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, novelId])
+  @@index([userId, readAt])
+  @@map("reading_histories")
+}
+
+model DailyStats {
+  id        String   @id @default(cuid())
+  date      DateTime @db.Date
+  views     Int      @default(0)
+  likes     Int      @default(0)
+  bookmarks Int      @default(0)
+
+  novelId   String
+  novel     Novel    @relation(fields: [novelId], references: [id], onDelete: Cascade)
+
+  @@unique([novelId, date])
+  @@index([novelId, date])
+  @@map("daily_stats")
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  rating    Int      // 1-5
+  title     String
   content   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -110,7 +211,89 @@ model Comment {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   novel     Novel    @relation(fields: [novelId], references: [id], onDelete: Cascade)
 
+  @@unique([userId, novelId])
   @@index([novelId])
+  @@index([createdAt])
+  @@map("reviews")
+}
+
+model Contest {
+  id          String    @id @default(cuid())
+  title       String
+  description String
+  theme       String
+  startDate   DateTime
+  endDate     DateTime
+  status      String    @default("upcoming") // upcoming, active, ended
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  entries     ContestEntry[]
+
+  @@index([status])
+  @@index([endDate])
+  @@map("contests")
+}
+
+model ContestEntry {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  contestId String
+  novelId   String
+  contest   Contest  @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  novel     Novel    @relation(fields: [novelId], references: [id], onDelete: Cascade)
+
+  @@unique([contestId, novelId])
+  @@index([contestId])
+  @@map("contest_entries")
+}
+
+model Follow {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  followerId  String
+  followingId String
+  follower    User   @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User   @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followingId])
+  @@map("follows")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  type      String   // new_chapter, new_review, new_follower
+  message   String
+  link      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
+  @@map("notifications")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId    String
+  novelId   String
+  chapterId String?
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  novel     Novel    @relation(fields: [novelId], references: [id], onDelete: Cascade)
+  chapter   Chapter? @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  @@index([novelId])
+  @@index([chapterId])
   @@index([createdAt])
   @@map("comments")
 }

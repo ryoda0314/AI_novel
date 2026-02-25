@@ -2,11 +2,17 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { TagInput } from "@/components/ui/tag-input";
 
 interface Genre {
   id: string;
   name: string;
   slug: string;
+}
+
+interface SeriesOption {
+  id: string;
+  title: string;
 }
 
 export default function EditNovelPage() {
@@ -16,7 +22,10 @@ export default function EditNovelPage() {
   const [synopsis, setSynopsis] = useState("");
   const [status, setStatus] = useState("ongoing");
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+  const [tags, setTags] = useState<string[]>([]);
+  const [seriesId, setSeriesId] = useState("");
   const [genres, setGenres] = useState<Genre[]>([]);
+  const [seriesList, setSeriesList] = useState<SeriesOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [error, setError] = useState("");
@@ -33,7 +42,17 @@ export default function EditNovelPage() {
       setStatus(novel.status);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setSelectedGenres(novel.genres.map((g: any) => g.genre.id || g.genreId));
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setTags(novel.tags?.map((t: any) => t.tag.name) || []);
+      setSeriesId(novel.seriesId || "");
       setGenres(genresData);
+
+      // 作者のシリーズ一覧を取得
+      if (novel.authorId) {
+        fetch(`/api/series?authorId=${novel.authorId}`)
+          .then(r => r.json())
+          .then((data: SeriesOption[]) => setSeriesList(data));
+      }
       setFetching(false);
     });
   }, [params.id]);
@@ -53,7 +72,7 @@ export default function EditNovelPage() {
       const res = await fetch(`/api/novels/${params.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, synopsis, status, genreIds: selectedGenres }),
+        body: JSON.stringify({ title, synopsis, status, genreIds: selectedGenres, tags, seriesId: seriesId || null }),
       });
 
       if (res.ok) {
@@ -140,6 +159,30 @@ export default function EditNovelPage() {
             ))}
           </div>
         </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2">タグ（最大10個）</label>
+          <TagInput value={tags} onChange={setTags} />
+          <p className="text-xs text-[var(--color-muted-foreground)] mt-1">
+            異世界転生、チート、ダークファンタジーなど自由に入力できます
+          </p>
+        </div>
+
+        {seriesList.length > 0 && (
+          <div>
+            <label className="block text-sm font-medium mb-1">シリーズ（任意）</label>
+            <select
+              value={seriesId}
+              onChange={(e) => setSeriesId(e.target.value)}
+              className="px-3 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] text-sm"
+            >
+              <option value="">なし</option>
+              {seriesList.map(s => (
+                <option key={s.id} value={s.id}>{s.title}</option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <div className="flex gap-3">
           <button

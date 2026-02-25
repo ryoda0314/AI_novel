@@ -13,19 +13,28 @@ interface Comment {
   user: { id: string; name: string };
 }
 
-export function CommentSection({ novelId }: { novelId: string }) {
+interface CommentSectionProps {
+  novelId: string;
+  chapterId?: string;
+}
+
+export function CommentSection({ novelId, chapterId }: CommentSectionProps) {
   const { data: session } = useSession();
   const [comments, setComments] = useState<Comment[]>([]);
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
 
+  const apiBase = chapterId
+    ? `/api/novels/${novelId}/chapters/${chapterId}/comments`
+    : `/api/novels/${novelId}/comments`;
+
   useEffect(() => {
     fetchComments();
-  }, [novelId]);
+  }, [novelId, chapterId]);
 
   const fetchComments = async () => {
-    const res = await fetch(`/api/novels/${novelId}/comments`);
+    const res = await fetch(apiBase);
     const data = await res.json();
     setComments(data.comments);
     setTotal(data.total);
@@ -37,7 +46,7 @@ export function CommentSection({ novelId }: { novelId: string }) {
 
     setLoading(true);
     try {
-      const res = await fetch(`/api/novels/${novelId}/comments`, {
+      const res = await fetch(apiBase, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: content.trim() }),

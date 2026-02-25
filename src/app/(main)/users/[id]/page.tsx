@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { NovelCard } from "@/components/novels/novel-card";
+import { FollowButton } from "@/components/interactions/follow-button";
 import { User, Calendar } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 
@@ -17,6 +19,7 @@ interface UserProfile {
 
 export default function UserProfilePage() {
   const params = useParams();
+  const { data: session } = useSession();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -54,6 +57,11 @@ export default function UserProfilePage() {
           <p className="text-xs text-[var(--color-muted-foreground)] mt-2 flex items-center gap-1">
             <Calendar size={12} /> {formatDate(user.createdAt)}に登録
           </p>
+          {session?.user && session.user.id !== user.id && (
+            <div className="mt-3">
+              <FollowButton userId={user.id} showCounts />
+            </div>
+          )}
         </div>
       </div>
 

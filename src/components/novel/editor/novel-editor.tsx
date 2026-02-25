@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import { EditorToolbar } from "./editor-toolbar";
 import { EditorPreview } from "./editor-preview";
+import { AiAssistPanel } from "./ai-assist-panel";
 
 interface NovelEditorProps {
   value: string;
@@ -19,6 +20,7 @@ export function NovelEditor({
 }: NovelEditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [showAi, setShowAi] = useState(false);
 
   return (
     <div className="space-y-0">
@@ -28,7 +30,18 @@ export function NovelEditor({
         onChange={onChange}
         showPreview={showPreview}
         onTogglePreview={() => setShowPreview(!showPreview)}
+        showAi={showAi}
+        onToggleAi={() => setShowAi(!showAi)}
       />
+
+      {showAi && (
+        <AiAssistPanel
+          textareaRef={textareaRef}
+          value={value}
+          onChange={onChange}
+          onClose={() => setShowAi(false)}
+        />
+      )}
 
       <div className={showPreview ? "grid grid-cols-2 gap-3" : ""}>
         <textarea

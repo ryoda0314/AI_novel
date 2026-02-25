@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Search, Menu, X, BookOpen, PenTool, User, LogOut, LayoutDashboard } from "lucide-react";
+import { Search, Menu, X, BookOpen, PenTool, User, LogOut, LayoutDashboard, Bookmark } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { NotificationBell } from "@/components/interactions/notification-bell";
 
 export function Header() {
   const { data: session } = useSession();
@@ -40,6 +41,9 @@ export function Header() {
             <Link href="/ranking" className="hover:text-[var(--color-primary)] transition-colors">
               ランキング
             </Link>
+            <Link href="/contests" className="hover:text-[var(--color-primary)] transition-colors">
+              コンテスト
+            </Link>
             <Link href="/guide" className="hover:text-[var(--color-primary)] transition-colors">
               記法ガイド
             </Link>
@@ -62,6 +66,7 @@ export function Header() {
           {/* Right side */}
           <div className="flex items-center gap-2">
             <ThemeToggle />
+            <NotificationBell />
 
             {session?.user ? (
               <div className="relative">
@@ -90,6 +95,14 @@ export function Header() {
                         >
                           <LayoutDashboard size={16} />
                           ダッシュボード
+                        </Link>
+                        <Link
+                          href="/dashboard/bookshelf"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-[var(--color-muted)] transition-colors"
+                        >
+                          <Bookmark size={16} />
+                          本棚
                         </Link>
                         <Link
                           href="/novels/new"
@@ -175,6 +188,13 @@ export function Header() {
                 className="px-3 py-2 rounded hover:bg-[var(--color-muted)] transition-colors"
               >
                 ランキング
+              </Link>
+              <Link
+                href="/contests"
+                onClick={() => setMobileMenuOpen(false)}
+                className="px-3 py-2 rounded hover:bg-[var(--color-muted)] transition-colors"
+              >
+                コンテスト
               </Link>
               <Link
                 href="/guide"

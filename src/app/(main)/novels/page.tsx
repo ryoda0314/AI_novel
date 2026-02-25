@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { NovelCard } from "@/components/novels/novel-card";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 
 interface Genre {
   id: string;
@@ -31,6 +31,7 @@ function NovelsContent() {
   const page = parseInt(searchParams.get("page") || "1");
   const sort = searchParams.get("sort") || "recent";
   const genre = searchParams.get("genre") || "";
+  const tag = searchParams.get("tag") || "";
   const q = searchParams.get("q") || "";
 
   useEffect(() => {
@@ -43,6 +44,7 @@ function NovelsContent() {
     params.set("page", page.toString());
     params.set("sort", sort);
     if (genre) params.set("genre", genre);
+    if (tag) params.set("tag", tag);
     if (q) params.set("q", q);
 
     fetch(`/api/novels?${params}`)
@@ -52,7 +54,7 @@ function NovelsContent() {
         setTotalPages(data.totalPages);
       })
       .finally(() => setLoading(false));
-  }, [page, sort, genre, q]);
+  }, [page, sort, genre, tag, q]);
 
   const updateParams = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -105,6 +107,22 @@ function NovelsContent() {
           ))}
         </div>
       </div>
+
+      {/* Active tag filter */}
+      {tag && (
+        <div className="flex items-center gap-2 mb-4">
+          <span className="text-sm text-[var(--color-muted-foreground)]">タグ:</span>
+          <span className="inline-flex items-center gap-1 text-sm px-3 py-1 rounded-full border border-[var(--color-primary)]/30 text-[var(--color-primary)]">
+            #{tag}
+            <button
+              onClick={() => updateParams("tag", "")}
+              className="hover:text-red-500 transition-colors"
+            >
+              <X size={14} />
+            </button>
+          </span>
+        </div>
+      )}
 
       {/* Novel Grid */}
       {loading ? (

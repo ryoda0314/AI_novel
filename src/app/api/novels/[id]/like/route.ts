@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { incrementDailyLikes } from "@/lib/daily-stats";
 import { NextResponse } from "next/server";
 
 export async function POST(
@@ -24,6 +25,8 @@ export async function POST(
       data: { userId: session.user.id, novelId: id },
     });
   }
+
+  incrementDailyLikes(id, existing ? -1 : 1).catch(() => {});
 
   const count = await prisma.like.count({ where: { novelId: id } });
 

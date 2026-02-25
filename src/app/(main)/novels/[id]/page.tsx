@@ -3,10 +3,13 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { Eye, BookOpen, Clock } from "lucide-react";
-import { formatDate, getStatusLabel, getStatusColor } from "@/lib/utils";
+import { Eye, BookOpen, Clock, PlayCircle, Library } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { formatDate, getStatusLabel, getStatusColor, estimateReadingTime } from "@/lib/utils";
 import { LikeButton } from "@/components/interactions/like-button";
+import { BookmarkButton } from "@/components/interactions/bookmark-button";
 import { CommentSection } from "@/components/interactions/comment-section";
+import { ReviewSection } from "@/components/interactions/review-section";
 import { NovelMarkdown } from "@/components/novel/novel-markdown";
 import { NovelInlineText } from "@/components/novel/novel-inline-text";
 
@@ -21,14 +24,23 @@ interface Novel {
   updatedAt: string;
   author: { id: string; name: string; bio?: string };
   genres: { genre: { name: string; slug: string } }[];
-  chapters: { id: string; title: string; chapterNum: number; publishedAt: string }[];
+  tags?: { tag: { id: string; name: string } }[];
+  series?: { id: string; title: string } | null;
+  chapters: { id: string; title: string; chapterNum: number; publishedAt: string; charCount: number }[];
   _count: { likes: number; comments: number };
+}
+
+interface ReadingProgress {
+  chapter: { id: string; title: string; chapterNum: number };
 }
 
 export default function NovelDetailPage() {
   const params = useParams();
+  const { data: session } = useSession();
   const [novel, setNovel] = useState<Novel | null>(null);
   const [likeData, setLikeData] = useState({ liked: false, count: 0 });
+  const [bookmarkData, setBookmarkData] = useState({ bookmarked: false, count: 0 });
+  const [readingProgress, setReadingProgress] = useState<ReadingProgress | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -37,15 +49,28 @@ export default function NovelDetailPage() {
     Promise.all([
       fetch(`/api/novels/${params.id}`).then(r => r.json()),
       fetch(`/api/novels/${params.id}/like`).then(r => r.json()),
-    ]).then(([novelData, like]) => {
+      fetch(`/api/novels/${params.id}/bookmark`).then(r => r.json()),
+    ]).then(([novelData, like, bookmark]) => {
       setNovel(novelData);
       setLikeData(like);
+      setBookmarkData(bookmark);
       setLoading(false);
     });
 
     // Increment view count
     fetch(`/api/novels/${params.id}/view`, { method: "POST" });
   }, [params.id]);
+
+  // 読書履歴を取得
+  useEffect(() => {
+    if (!params.id || !session?.user) return;
+    fetch(`/api/reading-history?novelId=${params.id}&limit=1`)
+      .then(r => r.json())
+      .then((data) => {
+        if (data?.length > 0) setReadingProgress(data[0]);
+      })
+      .catch(() => {});
+  }, [params.id, session]);
 
   if (loading) {
     return (
@@ -87,6 +112,11 @@ export default function NovelDetailPage() {
           <span className="flex items-center gap-1">
             <BookOpen size={14} /> {novel.chapters.length}話
           </span>
+          {novel.chapters.length > 0 && (
+            <span className="flex items-center gap-1">
+              <Clock size={14} /> {estimateReadingTime(novel.chapters.reduce((sum, ch) => sum + ch.charCount, 0))}
+            </span>
+          )}
           <span className="flex items-center gap-1">
             <Clock size={14} /> {formatDate(novel.createdAt)}
           </span>
@@ -94,7 +124,7 @@ export default function NovelDetailPage() {
 
         {/* Genres */}
         {novel.genres.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-4">
+          <div className="flex flex-wrap gap-2 mb-2">
             {novel.genres.map(({ genre }) => (
               <Link
                 key={genre.slug}
@@ -107,12 +137,47 @@ export default function NovelDetailPage() {
           </div>
         )}
 
-        {/* Like button */}
-        <LikeButton
-          novelId={novel.id}
-          initialLiked={likeData.liked}
-          initialCount={likeData.count}
-        />
+        {/* Tags */}
+        {novel.tags && novel.tags.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-4">
+            {novel.tags.map(({ tag }) => (
+              <Link
+                key={tag.id}
+                href={`/novels?tag=${encodeURIComponent(tag.name)}`}
+                className="text-xs px-3 py-1 rounded-full border border-[var(--color-primary)]/30 text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 transition-colors"
+              >
+                #{tag.name}
+              </Link>
+            ))}
+          </div>
+        )}
+
+        {/* Series */}
+        {novel.series && (
+          <div className="mb-4">
+            <Link
+              href={`/series/${novel.series.id}`}
+              className="inline-flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-muted)] transition-colors"
+            >
+              <Library size={14} />
+              シリーズ: {novel.series.title}
+            </Link>
+          </div>
+        )}
+
+        {/* Like & Bookmark buttons */}
+        <div className="flex items-center gap-3">
+          <LikeButton
+            novelId={novel.id}
+            initialLiked={likeData.liked}
+            initialCount={likeData.count}
+          />
+          <BookmarkButton
+            novelId={novel.id}
+            initialBookmarked={bookmarkData.bookmarked}
+            initialCount={bookmarkData.count}
+          />
+        </div>
       </div>
 
       {/* Synopsis */}
@@ -124,6 +189,24 @@ export default function NovelDetailPage() {
           showMetadata={false}
         />
       </section>
+
+      {/* Continue Reading */}
+      {readingProgress && (
+        <section className="mb-8">
+          <Link
+            href={`/novels/${novel.id}/chapters/${readingProgress.chapter.id}`}
+            className="flex items-center gap-3 p-4 rounded-xl border border-[var(--color-primary)]/30 bg-[var(--color-primary)]/5 hover:bg-[var(--color-primary)]/10 transition-colors"
+          >
+            <PlayCircle size={24} className="text-[var(--color-primary)] shrink-0" />
+            <div>
+              <p className="text-sm font-medium">続きから読む</p>
+              <p className="text-xs text-[var(--color-muted-foreground)]">
+                第{readingProgress.chapter.chapterNum}話: <NovelInlineText text={readingProgress.chapter.title} />
+              </p>
+            </div>
+          </Link>
+        </section>
+      )}
 
       {/* Chapters */}
       <section className="mb-8">
@@ -144,8 +227,12 @@ export default function NovelDetailPage() {
                   <span className="text-[var(--color-muted-foreground)] mr-3">第{chapter.chapterNum}話</span>
                   <NovelInlineText text={chapter.title} />
                 </span>
-                <span className="text-xs text-[var(--color-muted-foreground)]">
-                  {formatDate(chapter.publishedAt)}
+                <span className="flex items-center gap-2 text-xs text-[var(--color-muted-foreground)] shrink-0">
+                  <span className="flex items-center gap-1">
+                    <Clock size={10} />
+                    {estimateReadingTime(chapter.charCount)}
+                  </span>
+                  <span>{formatDate(chapter.publishedAt)}</span>
                 </span>
               </Link>
             ))}
@@ -155,6 +242,11 @@ export default function NovelDetailPage() {
             まだ話が投稿されていません
           </p>
         )}
+      </section>
+
+      {/* Reviews */}
+      <section className="mb-8">
+        <ReviewSection novelId={novel.id} />
       </section>
 
       {/* Comments */}
