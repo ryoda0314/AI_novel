@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1"/>
+      <stop offset="100%" style="stop-color:#8b5cf6"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+  <!-- 本のアイコン -->
+  <g transform="translate(256,256)" fill="none" stroke="white" stroke-width="20" stroke-linecap="round" stroke-linejoin="round">
+    <!-- 左ページ -->
+    <path d="M-10,-100 C-60,-100 -120,-90 -140,-70 L-140,90 C-120,70 -60,60 -10,60" fill="white" fill-opacity="0.15"/>
+    <!-- 右ページ -->
+    <path d="M10,-100 C60,-100 120,-90 140,-70 L140,90 C120,70 60,60 10,60" fill="white" fill-opacity="0.15"/>
+    <!-- 背表紙 -->
+    <line x1="0" y1="-100" x2="0" y2="60"/>
+    <!-- テキスト行（左） -->
+    <line x1="-100" y1="-50" x2="-40" y2="-50" stroke-width="10" stroke-opacity="0.6"/>
+    <line x1="-110" y1="-20" x2="-35" y2="-20" stroke-width="10" stroke-opacity="0.6"/>
+    <line x1="-105" y1="10" x2="-45" y2="10" stroke-width="10" stroke-opacity="0.6"/>
+    <!-- テキスト行（右） -->
+    <line x1="40" y1="-50" x2="100" y2="-50" stroke-width="10" stroke-opacity="0.6"/>
+    <line x1="35" y1="-20" x2="110" y2="-20" stroke-width="10" stroke-opacity="0.6"/>
+    <line x1="45" y1="10" x2="105" y2="10" stroke-width="10" stroke-opacity="0.6"/>
+    <!-- AI スパーク -->
+    <g transform="translate(90,-110)" stroke="white" stroke-width="12">
+      <line x1="0" y1="-25" x2="0" y2="25"/>
+      <line x1="-25" y1="0" x2="25" y2="0"/>
+      <line x1="-17" y1="-17" x2="17" y2="17"/>
+      <line x1="17" y1="-17" x2="-17" y2="17"/>
+    </g>
+  </g>
+</svg>
