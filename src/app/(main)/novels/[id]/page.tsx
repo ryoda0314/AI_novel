@@ -3,13 +3,15 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { Eye, BookOpen, Clock, PlayCircle, Library } from "lucide-react";
+import { Eye, BookOpen, Clock, PlayCircle, Library, Download } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { formatDate, getStatusLabel, getStatusColor, estimateReadingTime } from "@/lib/utils";
 import { LikeButton } from "@/components/interactions/like-button";
 import { BookmarkButton } from "@/components/interactions/bookmark-button";
 import { CommentSection } from "@/components/interactions/comment-section";
 import { ReviewSection } from "@/components/interactions/review-section";
+import { ShareButtons } from "@/components/interactions/share-buttons";
+import { ReportButton } from "@/components/interactions/report-button";
 import { NovelMarkdown } from "@/components/novel/novel-markdown";
 import { NovelInlineText } from "@/components/novel/novel-inline-text";
 
@@ -18,6 +20,7 @@ interface Novel {
   serialNumber: number;
   title: string;
   synopsis: string;
+  coverUrl?: string | null;
   status: string;
   viewCount: number;
   createdAt: string;
@@ -90,6 +93,13 @@ export default function NovelDetailPage() {
 
   return (
     <div className="max-w-3xl mx-auto">
+      {/* Cover Image */}
+      {novel.coverUrl && (
+        <div className="mb-6 rounded-xl overflow-hidden">
+          <img src={novel.coverUrl} alt={novel.title} className="w-full max-h-64 object-cover" />
+        </div>
+      )}
+
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-start justify-between gap-4 mb-3">
@@ -165,7 +175,7 @@ export default function NovelDetailPage() {
           </div>
         )}
 
-        {/* Like & Bookmark buttons */}
+        {/* Like & Bookmark & Download buttons */}
         <div className="flex items-center gap-3">
           <LikeButton
             novelId={novel.id}
@@ -177,6 +187,16 @@ export default function NovelDetailPage() {
             initialBookmarked={bookmarkData.bookmarked}
             initialCount={bookmarkData.count}
           />
+          {novel.chapters.length > 0 && (
+            <a
+              href={`/api/novels/${novel.id}/export`}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--color-border)] text-sm text-[var(--color-muted-foreground)] hover:bg-[var(--color-muted)] transition-colors"
+            >
+              <Download size={14} /> EPUB
+            </a>
+          )}
+          <ShareButtons title={novel.title} />
+          <ReportButton targetType="novel" targetId={novel.id} />
         </div>
       </div>
 

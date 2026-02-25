@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { TagInput } from "@/components/ui/tag-input";
+import { CoverUpload } from "@/components/ui/cover-upload";
 
 interface Genre {
   id: string;
@@ -25,6 +26,7 @@ export default function NewNovelPage() {
   const [tags, setTags] = useState<string[]>([]);
   const [seriesId, setSeriesId] = useState("");
   const [genres, setGenres] = useState<Genre[]>([]);
+  const [coverUrl, setCoverUrl] = useState("");
   const [seriesList, setSeriesList] = useState<SeriesOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -64,6 +66,7 @@ export default function NewNovelPage() {
         body: JSON.stringify({
           title: title.trim(),
           synopsis: synopsis.trim(),
+          coverUrl: coverUrl || undefined,
           genreIds: selectedGenres,
           tags,
           seriesId: seriesId || undefined,
@@ -93,6 +96,11 @@ export default function NewNovelPage() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
+          <label className="block text-sm font-medium mb-2">表紙画像（任意）</label>
+          <CoverUpload value={coverUrl} onChange={setCoverUrl} />
+        </div>
+
         <div>
           <label className="block text-sm font-medium mb-1">タイトル</label>
           <input

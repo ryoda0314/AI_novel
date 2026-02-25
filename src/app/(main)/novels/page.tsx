@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { NovelCard } from "@/components/novels/novel-card";
-import { Search, X } from "lucide-react";
+import { Search, X, Loader2 } from "lucide-react";
 
 interface Genre {
   id: string;
@@ -25,10 +25,12 @@ function NovelsContent() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [novels, setNovels] = useState<any[]>([]);
   const [genres, setGenres] = useState<Genre[]>([]);
-  const [totalPages, setTotalPages] = useState(1);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const observerRef = useRef<HTMLDivElement>(null);
 
-  const page = parseInt(searchParams.get("page") || "1");
   const sort = searchParams.get("sort") || "recent";
   const genre = searchParams.get("genre") || "";
   const tag = searchParams.get("tag") || "";
@@ -38,23 +40,61 @@ function NovelsContent() {
     fetch("/api/genres").then(r => r.json()).then(setGenres);
   }, []);
 
+  // フィルター変更時にリセット
   useEffect(() => {
+    setNovels([]);
+    setPage(1);
+    setHasMore(true);
     setLoading(true);
+  }, [sort, genre, tag, q]);
+
+  // データ取得
+  const fetchNovels = useCallback(async (pageNum: number, isInitial: boolean) => {
     const params = new URLSearchParams();
-    params.set("page", page.toString());
+    params.set("page", pageNum.toString());
+    params.set("limit", "18");
     params.set("sort", sort);
     if (genre) params.set("genre", genre);
     if (tag) params.set("tag", tag);
     if (q) params.set("q", q);
 
-    fetch(`/api/novels?${params}`)
-      .then(r => r.json())
-      .then(data => {
-        setNovels(data.novels);
-        setTotalPages(data.totalPages);
-      })
-      .finally(() => setLoading(false));
-  }, [page, sort, genre, tag, q]);
+    const res = await fetch(`/api/novels?${params}`);
+    const data = await res.json();
+
+    if (isInitial) {
+      setNovels(data.novels || []);
+    } else {
+      setNovels(prev => [...prev, ...(data.novels || [])]);
+    }
+
+    setHasMore(pageNum < (data.totalPages || 1));
+    setLoading(false);
+    setLoadingMore(false);
+  }, [sort, genre, tag, q]);
+
+  useEffect(() => {
+    fetchNovels(1, true);
+  }, [fetchNovels]);
+
+  // Intersection Observer で無限スクロール
+  useEffect(() => {
+    if (!observerRef.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loading && !loadingMore) {
+          setLoadingMore(true);
+          const nextPage = page + 1;
+          setPage(nextPage);
+          fetchNovels(nextPage, false);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(observerRef.current);
+    return () => observer.disconnect();
+  }, [hasMore, loading, loadingMore, page, fetchNovels]);
 
   const updateParams = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -63,7 +103,7 @@ function NovelsContent() {
     } else {
       params.delete(key);
     }
-    if (key !== "page") params.set("page", "1");
+    params.delete("page");
     router.push(`/novels?${params}`);
   };
 
@@ -73,7 +113,6 @@ function NovelsContent() {
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3 mb-6">
-        {/* Sort */}
         <select
           value={sort}
           onChange={(e) => updateParams("sort", e.target.value)}
@@ -84,7 +123,6 @@ function NovelsContent() {
           <option value="views">閲覧数順</option>
         </select>
 
-        {/* Genre chips */}
         <div className="flex flex-wrap gap-1">
           <button
             onClick={() => updateParams("genre", "")}
@@ -114,10 +152,7 @@ function NovelsContent() {
           <span className="text-sm text-[var(--color-muted-foreground)]">タグ:</span>
           <span className="inline-flex items-center gap-1 text-sm px-3 py-1 rounded-full border border-[var(--color-primary)]/30 text-[var(--color-primary)]">
             #{tag}
-            <button
-              onClick={() => updateParams("tag", "")}
-              className="hover:text-red-500 transition-colors"
-            >
+            <button onClick={() => updateParams("tag", "")} className="hover:text-red-500 transition-colors">
               <X size={14} />
             </button>
           </span>
@@ -132,40 +167,24 @@ function NovelsContent() {
           ))}
         </div>
       ) : novels.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {novels.map((novel) => (
-            <NovelCard key={novel.id} novel={novel} />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {novels.map((novel) => (
+              <NovelCard key={novel.id} novel={novel} />
+            ))}
+          </div>
+
+          {/* 無限スクロールトリガー */}
+          {hasMore && (
+            <div ref={observerRef} className="flex justify-center py-8">
+              {loadingMore && <Loader2 size={24} className="animate-spin text-[var(--color-muted-foreground)]" />}
+            </div>
+          )}
+        </>
       ) : (
         <div className="text-center py-16 text-[var(--color-muted-foreground)]">
           <Search size={48} className="mx-auto mb-4 opacity-50" />
           <p>作品が見つかりませんでした</p>
-        </div>
-      )}
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex justify-center gap-2 mt-8">
-          {page > 1 && (
-            <button
-              onClick={() => updateParams("page", (page - 1).toString())}
-              className="px-4 py-2 rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-muted)] text-sm"
-            >
-              前へ
-            </button>
-          )}
-          <span className="px-4 py-2 text-sm">
-            {page} / {totalPages}
-          </span>
-          {page < totalPages && (
-            <button
-              onClick={() => updateParams("page", (page + 1).toString())}
-              className="px-4 py-2 rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-muted)] text-sm"
-            >
-              次へ
-            </button>
-          )}
         </div>
       )}
     </div>

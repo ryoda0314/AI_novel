@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Search, Menu, X, BookOpen, PenTool, User, LogOut, LayoutDashboard, Bookmark } from "lucide-react";
+import { Search, Menu, X, BookOpen, PenTool, User, LogOut, LayoutDashboard, Bookmark, Shield, MessageSquare } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { NotificationBell } from "@/components/interactions/notification-bell";
 
@@ -105,6 +105,14 @@ export function Header() {
                           本棚
                         </Link>
                         <Link
+                          href="/messages"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-[var(--color-muted)] transition-colors"
+                        >
+                          <MessageSquare size={16} />
+                          メッセージ
+                        </Link>
+                        <Link
                           href="/novels/new"
                           onClick={() => setUserMenuOpen(false)}
                           className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-[var(--color-muted)] transition-colors"
@@ -119,6 +127,14 @@ export function Header() {
                         >
                           <User size={16} />
                           プロフィール
+                        </Link>
+                        <Link
+                          href="/admin"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-[var(--color-muted)] transition-colors"
+                        >
+                          <Shield size={16} />
+                          管理者
                         </Link>
                         <button
                           onClick={() => { setUserMenuOpen(false); signOut(); }}

@@ -77,7 +77,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
   }
 
-  const { title, synopsis, genreIds, tags, seriesId } = await request.json();
+  const { title, synopsis, coverUrl, genreIds, tags, seriesId } = await request.json();
 
   if (!title || !synopsis) {
     return NextResponse.json({ error: "タイトルとあらすじは必須です" }, { status: 400 });
@@ -112,6 +112,7 @@ export async function POST(request: Request) {
     data: {
       title,
       synopsis,
+      coverUrl: coverUrl || null,
       authorId: session.user.id,
       seriesId: seriesId || null,
       seriesOrder: seriesOrder ?? null,

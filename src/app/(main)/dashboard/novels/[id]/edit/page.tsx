@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { TagInput } from "@/components/ui/tag-input";
+import { CoverUpload } from "@/components/ui/cover-upload";
 
 interface Genre {
   id: string;
@@ -22,6 +23,7 @@ export default function EditNovelPage() {
   const [synopsis, setSynopsis] = useState("");
   const [status, setStatus] = useState("ongoing");
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+  const [coverUrl, setCoverUrl] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [seriesId, setSeriesId] = useState("");
   const [genres, setGenres] = useState<Genre[]>([]);
@@ -40,6 +42,7 @@ export default function EditNovelPage() {
       setTitle(novel.title);
       setSynopsis(novel.synopsis);
       setStatus(novel.status);
+      setCoverUrl(novel.coverUrl || "");
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setSelectedGenres(novel.genres.map((g: any) => g.genre.id || g.genreId));
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -72,7 +75,7 @@ export default function EditNovelPage() {
       const res = await fetch(`/api/novels/${params.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, synopsis, status, genreIds: selectedGenres, tags, seriesId: seriesId || null }),
+        body: JSON.stringify({ title, synopsis, coverUrl, status, genreIds: selectedGenres, tags, seriesId: seriesId || null }),
       });
 
       if (res.ok) {
@@ -105,6 +108,11 @@ export default function EditNovelPage() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
+          <label className="block text-sm font-medium mb-2">表紙画像</label>
+          <CoverUpload value={coverUrl} onChange={setCoverUrl} />
+        </div>
+
         <div>
           <label className="block text-sm font-medium mb-1">タイトル</label>
           <input

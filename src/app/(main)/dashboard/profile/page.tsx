@@ -1,17 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { Camera, Loader2 } from "lucide-react";
 
 export default function ProfileEditPage() {
   const { data: session, update } = useSession();
   const router = useRouter();
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!session?.user?.id) return;
@@ -20,8 +24,25 @@ export default function ProfileEditPage() {
       .then(data => {
         setName(data.name || "");
         setBio(data.bio || "");
+        setAvatarUrl(data.avatarUrl || "");
       });
   }, [session?.user?.id]);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await fetch("/api/upload", { method: "POST", body: formData });
+    if (res.ok) {
+      const { url } = await res.json();
+      setAvatarUrl(url);
+    }
+    setUploading(false);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +54,7 @@ export default function ProfileEditPage() {
       const res = await fetch(`/api/users/${session?.user?.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, bio }),
+        body: JSON.stringify({ name, bio, avatarUrl }),
       });
 
       if (res.ok) {
@@ -66,6 +87,40 @@ export default function ProfileEditPage() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* アバター */}
+        <div>
+          <label className="block text-sm font-medium mb-2">アバター画像</label>
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="アバター" className="w-20 h-20 rounded-full object-cover border-2 border-[var(--color-border)]" />
+              ) : (
+                <div className="w-20 h-20 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white text-2xl font-bold">
+                  {name?.[0] || "U"}
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                disabled={uploading}
+                className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-[var(--color-card)] border border-[var(--color-border)] hover:bg-[var(--color-muted)] transition-colors"
+              >
+                {uploading ? <Loader2 size={14} className="animate-spin" /> : <Camera size={14} />}
+              </button>
+            </div>
+            {avatarUrl && (
+              <button
+                type="button"
+                onClick={() => setAvatarUrl("")}
+                className="text-xs text-red-500 hover:underline"
+              >
+                画像を削除
+              </button>
+            )}
+          </div>
+          <input ref={fileRef} type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
+        </div>
+
         <div>
           <label className="block text-sm font-medium mb-1">ペンネーム</label>
           <input

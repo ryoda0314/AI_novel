@@ -8,6 +8,7 @@ interface NovelCardProps {
   serialNumber: number;
   title: string;
   synopsis: string;
+  coverUrl?: string | null;
   status: string;
   viewCount: number;
   createdAt: string;
@@ -20,7 +21,13 @@ interface NovelCardProps {
 export function NovelCard({ novel }: { novel: NovelCardProps }) {
   return (
     <Link href={`/novels/${novel.id}`} className="block group">
-      <div className="h-full p-5 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] hover:shadow-md transition-shadow">
+      <div className="h-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] hover:shadow-md transition-shadow overflow-hidden">
+        {novel.coverUrl && (
+          <div className="w-full h-36 overflow-hidden">
+            <img src={novel.coverUrl} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+          </div>
+        )}
+        <div className="p-5">
         <div className="flex items-start justify-between gap-2 mb-2">
           <h3 className="font-bold text-lg group-hover:text-[var(--color-primary)] transition-colors line-clamp-2">
             <span className="text-sm text-[var(--color-muted-foreground)] font-normal mr-1.5">#{novel.serialNumber}</span>
@@ -79,6 +86,7 @@ export function NovelCard({ novel }: { novel: NovelCardProps }) {
         <p className="text-xs text-[var(--color-muted-foreground)] mt-2">
           {formatDate(novel.createdAt)}
         </p>
+        </div>
       </div>
     </Link>
   );

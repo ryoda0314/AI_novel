@@ -5,13 +5,15 @@ import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { NovelCard } from "@/components/novels/novel-card";
 import { FollowButton } from "@/components/interactions/follow-button";
-import { User, Calendar } from "lucide-react";
+import { User, Calendar, MessageSquare } from "lucide-react";
+import Link from "next/link";
 import { formatDate } from "@/lib/utils";
 
 interface UserProfile {
   id: string;
   name: string;
   bio: string | null;
+  avatarUrl: string | null;
   createdAt: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   novels: any[];
@@ -46,9 +48,13 @@ export default function UserProfilePage() {
     <div className="max-w-3xl mx-auto">
       {/* Profile */}
       <div className="flex items-start gap-4 mb-8 p-6 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]">
-        <div className="w-16 h-16 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white text-2xl font-bold">
-          {user.name[0]}
-        </div>
+        {user.avatarUrl ? (
+          <img src={user.avatarUrl} alt={user.name} className="w-16 h-16 rounded-full object-cover border-2 border-[var(--color-border)]" />
+        ) : (
+          <div className="w-16 h-16 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white text-2xl font-bold">
+            {user.name[0]}
+          </div>
+        )}
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <User size={20} /> {user.name}
@@ -58,8 +64,14 @@ export default function UserProfilePage() {
             <Calendar size={12} /> {formatDate(user.createdAt)}に登録
           </p>
           {session?.user && session.user.id !== user.id && (
-            <div className="mt-3">
+            <div className="mt-3 flex items-center gap-2">
               <FollowButton userId={user.id} showCounts />
+              <Link
+                href={`/messages?with=${user.id}`}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--color-border)] text-sm hover:bg-[var(--color-muted)] transition-colors"
+              >
+                <MessageSquare size={14} /> メッセージ
+              </Link>
             </div>
           )}
         </div>

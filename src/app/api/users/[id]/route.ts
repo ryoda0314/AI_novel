@@ -13,6 +13,7 @@ export async function GET(
       id: true,
       name: true,
       bio: true,
+      avatarUrl: true,
       createdAt: true,
       novels: {
         include: {
@@ -45,15 +46,16 @@ export async function PUT(
     return NextResponse.json({ error: "権限がありません" }, { status: 403 });
   }
 
-  const { name, bio } = await request.json();
+  const { name, bio, avatarUrl } = await request.json();
 
   const updated = await prisma.user.update({
     where: { id },
     data: {
       ...(name && { name }),
       ...(bio !== undefined && { bio }),
+      ...(avatarUrl !== undefined && { avatarUrl: avatarUrl || null }),
     },
-    select: { id: true, name: true, bio: true },
+    select: { id: true, name: true, bio: true, avatarUrl: true },
   });
 
   return NextResponse.json(updated);

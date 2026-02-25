@@ -55,7 +55,7 @@ export async function PUT(
     return NextResponse.json({ error: "権限がありません" }, { status: 403 });
   }
 
-  const { title, synopsis, status, genreIds, tags, seriesId } = await request.json();
+  const { title, synopsis, coverUrl, status, genreIds, tags, seriesId } = await request.json();
 
   // Update genres: delete existing and create new
   if (genreIds) {
@@ -99,6 +99,7 @@ export async function PUT(
     data: {
       ...(title && { title }),
       ...(synopsis && { synopsis }),
+      ...(coverUrl !== undefined && { coverUrl: coverUrl || null }),
       ...(status && { status }),
       ...(seriesId !== undefined && { seriesId: seriesId || null, seriesOrder: seriesOrder ?? null }),
       ...(genreIds && {
