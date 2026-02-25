@@ -30,7 +30,8 @@ export async function POST(request: Request) {
       { id: user.id, name: user.name },
       { status: 201 }
     );
-  } catch {
+  } catch (error) {
+    console.error("Registration error:", error);
     return NextResponse.json(
       { error: "登録に失敗しました" },
       { status: 500 }
