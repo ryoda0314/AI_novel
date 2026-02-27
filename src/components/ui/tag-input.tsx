@@ -73,13 +73,16 @@ export function TagInput({ value, onChange, maxTags = 10 }: TagInputProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const addTag = (tagName: string) => {
-    const trimmed = tagName.trim();
-    if (!trimmed) return;
-    if (value.includes(trimmed)) return;
-    if (value.length >= maxTags) return;
+  const addTags = (input: string) => {
+    const newTags = input
+      .split(/[,、]/)
+      .map((t) => t.trim())
+      .filter((t) => t && !value.includes(t));
 
-    onChange([...value, trimmed]);
+    if (newTags.length === 0) return;
+
+    const available = maxTags - value.length;
+    onChange([...value, ...newTags.slice(0, available)]);
     setInput("");
     setSuggestions([]);
     setShowSuggestions(false);
@@ -94,9 +97,9 @@ export function TagInput({ value, onChange, maxTags = 10 }: TagInputProps) {
     if (e.key === "Enter" || e.key === ",") {
       e.preventDefault();
       if (selectedIndex >= 0 && selectedIndex < suggestions.length) {
-        addTag(suggestions[selectedIndex].name);
+        addTags(suggestions[selectedIndex].name);
       } else if (input.trim()) {
-        addTag(input);
+        addTags(input);
       }
     } else if (e.key === "Backspace" && !input && value.length > 0) {
       removeTag(value[value.length - 1]);
@@ -168,7 +171,7 @@ export function TagInput({ value, onChange, maxTags = 10 }: TagInputProps) {
                 }`}
                 onMouseDown={(e) => {
                   e.preventDefault();
-                  addTag(tag.name);
+                  addTags(tag.name);
                 }}
               >
                 <span>#{tag.name}</span>
