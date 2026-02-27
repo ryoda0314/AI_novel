@@ -8,6 +8,8 @@ interface CoverUploadProps {
   onChange: (url: string) => void;
 }
 
+const MAX_SIZE = 2 * 1024 * 1024; // 2MB
+
 export function CoverUpload({ value, onChange }: CoverUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
@@ -15,6 +17,12 @@ export function CoverUpload({ value, onChange }: CoverUploadProps) {
 
   const handleUpload = async (file: File) => {
     setError("");
+
+    if (file.size > MAX_SIZE) {
+      setError("ファイルサイズは2MB以下にしてください");
+      return;
+    }
+
     setUploading(true);
 
     try {
@@ -27,8 +35,14 @@ export function CoverUpload({ value, onChange }: CoverUploadProps) {
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        setError(data.error || "アップロードに失敗しました");
+        let message = "アップロードに失敗しました";
+        try {
+          const data = await res.json();
+          if (data.error) message = data.error;
+        } catch {
+          // JSONでないレスポンス（500エラーページなど）
+        }
+        setError(message);
         return;
       }
 
