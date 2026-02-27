@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
-import { supabaseAdmin, STORAGE_BUCKET } from "@/lib/supabase-storage";
+import { getSupabaseAdmin, STORAGE_BUCKET } from "@/lib/supabase-storage";
 
 const MAX_SIZE = 2 * 1024 * 1024; // 2MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     const filename = `${session.user.id}/${randomUUID()}.${ext}`;
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const { error: uploadError } = await supabaseAdmin.storage
+    const { error: uploadError } = await getSupabaseAdmin().storage
       .from(STORAGE_BUCKET)
       .upload(filename, buffer, {
         contentType: file.type,
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { data: urlData } = supabaseAdmin.storage
+    const { data: urlData } = getSupabaseAdmin().storage
       .from(STORAGE_BUCKET)
       .getPublicUrl(filename);
 

@@ -6,8 +6,10 @@ const nextConfig: NextConfig = {
     "@prisma/adapter-libsql",
     "@libsql/client",
   ],
-  serverActions: {
-    bodySizeLimit: "4mb",
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "4mb",
+    },
   },
 };
 
