@@ -9,6 +9,51 @@ interface CoverUploadProps {
 }
 
 const MAX_SIZE = 2 * 1024 * 1024; // 2MB
+const MAX_WIDTH = 1200;
+const MAX_HEIGHT = 1680;
+
+function compressImage(file: File): Promise<File> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      let { width, height } = img;
+
+      // アスペクト比を保ちながらリサイズ
+      if (width > MAX_WIDTH || height > MAX_HEIGHT) {
+        const ratio = Math.min(MAX_WIDTH / width, MAX_HEIGHT / height);
+        width = Math.round(width * ratio);
+        height = Math.round(height * ratio);
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return reject(new Error("Canvas非対応"));
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // 品質を段階的に下げて2MB以下にする
+      const tryCompress = (quality: number) => {
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) return reject(new Error("圧縮に失敗しました"));
+            if (blob.size <= MAX_SIZE || quality <= 0.3) {
+              resolve(new File([blob], file.name, { type: "image/jpeg" }));
+            } else {
+              tryCompress(quality - 0.1);
+            }
+          },
+          "image/jpeg",
+          quality
+        );
+      };
+
+      tryCompress(0.9);
+    };
+    img.onerror = () => reject(new Error("画像の読み込みに失敗しました"));
+    img.src = URL.createObjectURL(file);
+  });
+}
 
 export function CoverUpload({ value, onChange }: CoverUploadProps) {
   const [uploading, setUploading] = useState(false);
@@ -17,17 +62,18 @@ export function CoverUpload({ value, onChange }: CoverUploadProps) {
 
   const handleUpload = async (file: File) => {
     setError("");
-
-    if (file.size > MAX_SIZE) {
-      setError("ファイルサイズは2MB以下にしてください");
-      return;
-    }
-
     setUploading(true);
 
     try {
+      let uploadFile = file;
+
+      // 2MBを超える場合は自動圧縮
+      if (file.size > MAX_SIZE) {
+        uploadFile = await compressImage(file);
+      }
+
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", uploadFile);
 
       const res = await fetch("/api/upload", {
         method: "POST",
