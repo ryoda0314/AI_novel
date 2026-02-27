@@ -1,8 +1,7 @@
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
 import { randomUUID } from "crypto";
+import { supabaseAdmin, STORAGE_BUCKET } from "@/lib/supabase-storage";
 
 const MAX_SIZE = 2 * 1024 * 1024; // 2MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -36,16 +35,29 @@ export async function POST(request: Request) {
     }
 
     const ext = file.type.split("/")[1].replace("jpeg", "jpg");
-    const filename = `${randomUUID()}.${ext}`;
-    const uploadDir = path.join(process.cwd(), "public", "uploads");
-
-    await mkdir(uploadDir, { recursive: true });
+    const filename = `${session.user.id}/${randomUUID()}.${ext}`;
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    await writeFile(path.join(uploadDir, filename), buffer);
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from(STORAGE_BUCKET)
+      .upload(filename, buffer, {
+        contentType: file.type,
+        upsert: false,
+      });
 
-    const url = `/uploads/${filename}`;
-    return NextResponse.json({ url });
+    if (uploadError) {
+      console.error("Supabase Storageエラー:", uploadError);
+      return NextResponse.json(
+        { error: "ファイルの保存に失敗しました" },
+        { status: 500 }
+      );
+    }
+
+    const { data: urlData } = supabaseAdmin.storage
+      .from(STORAGE_BUCKET)
+      .getPublicUrl(filename);
+
+    return NextResponse.json({ url: urlData.publicUrl });
   } catch (err) {
     console.error("アップロードエラー:", err);
     return NextResponse.json(
