@@ -45,9 +45,25 @@ export async function GET(
   lines.push("---");
   lines.push("");
 
-  // 各章（コンテンツをそのまま連結 — 既に # 見出しが含まれている）
+  // 各章 — コンテンツから小説タイトルの # 見出し行を除去して連結
+  // chapter.title が小説タイトルと同じ場合がある（一括投稿時の仕様）
+  // コンテンツ内に # 小説タイトル と # 章タイトル の2つが含まれるケースに対応
+  const novelTitlePlain = novel.title
+    .replace(/\{([^|}]+)\|[^}]+\}/g, "$1")   // {漢字|ルビ} → 漢字
+    .replace(/\|([^|《》\n]+)《[^》]+》/g, "$1"); // |漢字《ルビ》 → 漢字
+
   for (const chapter of novel.chapters) {
-    lines.push(chapter.content);
+    // 各行を走査し、小説タイトルと一致する # 行を除去
+    const contentLines = chapter.content.split("\n");
+    const filtered = contentLines.filter((line) => {
+      const m = line.match(/^#\s+(.+)$/);
+      if (!m) return true;
+      const headingPlain = m[1].trim()
+        .replace(/\{([^|}]+)\|[^}]+\}/g, "$1")
+        .replace(/\|([^|《》\n]+)《[^》]+》/g, "$1");
+      return headingPlain !== novelTitlePlain;
+    });
+    lines.push(filtered.join("\n"));
     lines.push("");
   }
 
