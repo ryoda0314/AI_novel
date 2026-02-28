@@ -10,6 +10,7 @@ import {
   CheckSquare,
   Square,
   ArrowLeft,
+  Trash2,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 
@@ -108,6 +109,65 @@ export default function ChapterManagementPage() {
     }
   };
 
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async (chapterId: string, title: string) => {
+    if (!confirm(`「${title}」を削除しますか？この操作は取り消せません。`)) return;
+
+    setDeleting(true);
+    setMessage("");
+
+    try {
+      const res = await fetch(
+        `/api/novels/${params.id}/chapters/${chapterId}`,
+        { method: "DELETE" }
+      );
+
+      if (res.ok) {
+        setMessage("1話を削除しました");
+        setSelectedIds((prev) => prev.filter((id) => id !== chapterId));
+        await fetchChapters();
+      } else {
+        const data = await res.json();
+        setMessage(data.error || "削除に失敗しました");
+      }
+    } catch {
+      setMessage("ネットワークエラーが発生しました");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    if (
+      !confirm(`${selectedIds.length}話を削除しますか？この操作は取り消せません。`)
+    )
+      return;
+
+    setDeleting(true);
+    setMessage("");
+
+    try {
+      const results = await Promise.all(
+        selectedIds.map((chapterId) =>
+          fetch(`/api/novels/${params.id}/chapters/${chapterId}`, {
+            method: "DELETE",
+          })
+        )
+      );
+
+      const deletedCount = results.filter((r) => r.ok).length;
+      setMessage(`${deletedCount}話を削除しました`);
+      setSelectedIds([]);
+      await fetchChapters();
+    } catch {
+      setMessage("ネットワークエラーが発生しました");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto">
       <button
@@ -166,6 +226,13 @@ export default function ChapterManagementPage() {
                 {selectedIds.length === draftChapters.length
                   ? "選択解除"
                   : "全選択"}
+              </button>
+              <button
+                onClick={handleBulkDelete}
+                disabled={selectedIds.length === 0 || deleting}
+                className="px-4 py-1.5 rounded-lg border border-red-300 dark:border-red-800 text-red-600 dark:text-red-400 font-medium hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 text-xs"
+              >
+                {deleting ? "削除中..." : "選択した話を削除"}
               </button>
               <button
                 onClick={handleBulkPublish}
@@ -247,6 +314,15 @@ export default function ChapterManagementPage() {
                 >
                   <Edit size={14} />
                 </Link>
+
+                {/* 削除ボタン */}
+                <button
+                  onClick={() => handleDelete(chapter.id, chapter.title)}
+                  disabled={deleting}
+                  className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-[var(--color-muted-foreground)] hover:text-red-600 dark:hover:text-red-400 disabled:opacity-50"
+                >
+                  <Trash2 size={14} />
+                </button>
               </div>
             );
           })}
