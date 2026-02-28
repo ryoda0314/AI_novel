@@ -4,6 +4,7 @@ import { useState, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   Upload,
+  FolderOpen,
   FileText,
   AlertTriangle,
   BookOpen,
@@ -12,39 +13,38 @@ import {
 } from "lucide-react";
 import {
   parseMarkdownChapters,
-  type ParsedChapter,
+  parseFolderChapters,
   type ParseResult,
+  type FileEntry,
 } from "@/lib/markdown-bulk-parser";
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_TOTAL_SIZE = 50 * 1024 * 1024; // 50MB
 
+type UploadMode = "file" | "folder";
 type Step = "upload" | "preview" | "submitting" | "done";
 
 export default function BulkChapterPage() {
   const params = useParams();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const folderInputRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState<Step>("upload");
+  const [uploadMode, setUploadMode] = useState<UploadMode>("folder");
   const [parseResult, setParseResult] = useState<ParseResult | null>(null);
-  const [fileName, setFileName] = useState("");
+  const [sourceName, setSourceName] = useState("");
   const [error, setError] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const [createdCount, setCreatedCount] = useState(0);
 
-  const processFile = useCallback((file: File) => {
+  // 単一ファイル処理（従来方式）
+  const processSingleFile = useCallback((file: File) => {
     setError("");
-
-    if (file.size > MAX_FILE_SIZE) {
-      setError("ファイルサイズが10MBを超えています");
-      return;
-    }
-
     const reader = new FileReader();
     reader.onload = (e) => {
       const text = e.target?.result as string;
       const result = parseMarkdownChapters(text);
       setParseResult(result);
-      setFileName(file.name);
+      setSourceName(file.name);
       if (result.chapters.length > 0) {
         setStep("preview");
       }
@@ -52,9 +52,70 @@ export default function BulkChapterPage() {
     reader.readAsText(file, "UTF-8");
   }, []);
 
+  // 複数ファイル処理（フォルダ方式）
+  const processMultipleFiles = useCallback(async (fileList: FileList) => {
+    setError("");
+
+    const files = Array.from(fileList).filter(
+      (f) =>
+        f.name.endsWith(".md") ||
+        f.name.endsWith(".txt") ||
+        f.name.endsWith(".markdown")
+    );
+
+    if (files.length === 0) {
+      setError(
+        "対応するファイルが見つかりませんでした（.md / .txt のみ対応）"
+      );
+      return;
+    }
+
+    const totalSize = files.reduce((sum, f) => sum + f.size, 0);
+    if (totalSize > MAX_TOTAL_SIZE) {
+      setError("合計ファイルサイズが50MBを超えています");
+      return;
+    }
+
+    // 全ファイルを読み込み
+    const entries: FileEntry[] = await Promise.all(
+      files.map(
+        (f) =>
+          new Promise<FileEntry>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              resolve({
+                name: f.webkitRelativePath || f.name,
+                content: e.target?.result as string,
+              });
+            };
+            reader.readAsText(f, "UTF-8");
+          })
+      )
+    );
+
+    const result = parseFolderChapters(entries);
+    setParseResult(result);
+
+    // フォルダ名を取得
+    const firstPath = files[0].webkitRelativePath;
+    const folderName = firstPath
+      ? firstPath.split("/")[0]
+      : `${files.length}ファイル`;
+    setSourceName(folderName);
+
+    if (result.chapters.length > 0) {
+      setStep("preview");
+    }
+  }, []);
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) processFile(file);
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    if (uploadMode === "folder") {
+      processMultipleFiles(files);
+    } else {
+      processSingleFile(files[0]);
+    }
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -70,8 +131,15 @@ export default function BulkChapterPage() {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) processFile(file);
+    const files = e.dataTransfer.files;
+    if (!files || files.length === 0) return;
+
+    if (files.length === 1 && !files[0].webkitRelativePath) {
+      // 単一ファイルドロップ
+      processSingleFile(files[0]);
+    } else {
+      processMultipleFiles(files);
+    }
   };
 
   const updateChapterTitle = (index: number, newTitle: string) => {
@@ -124,6 +192,14 @@ export default function BulkChapterPage() {
     }
   };
 
+  const resetUpload = () => {
+    setStep("upload");
+    setParseResult(null);
+    setError("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (folderInputRef.current) folderInputRef.current.value = "";
+  };
+
   return (
     <div className="max-w-3xl mx-auto">
       <button
@@ -142,14 +218,45 @@ export default function BulkChapterPage() {
         </div>
       )}
 
-      {/* Step 1: ファイルアップロード */}
+      {/* Step 1: アップロード */}
       {step === "upload" && (
         <div>
+          {/* モード切替タブ */}
+          <div className="flex border-b border-[var(--color-border)] mb-6">
+            <button
+              onClick={() => setUploadMode("folder")}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                uploadMode === "folder"
+                  ? "border-[var(--color-primary)] text-[var(--color-primary)]"
+                  : "border-transparent text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)]"
+              }`}
+            >
+              <FolderOpen size={14} className="inline mr-1.5" />
+              フォルダで投稿
+            </button>
+            <button
+              onClick={() => setUploadMode("file")}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                uploadMode === "file"
+                  ? "border-[var(--color-primary)] text-[var(--color-primary)]"
+                  : "border-transparent text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)]"
+              }`}
+            >
+              <FileText size={14} className="inline mr-1.5" />
+              単一ファイルで投稿
+            </button>
+          </div>
+
+          {/* アップロードエリア */}
           <div
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() =>
+              uploadMode === "folder"
+                ? folderInputRef.current?.click()
+                : fileInputRef.current?.click()
+            }
             className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-colors ${
               isDragging
                 ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5"
@@ -160,12 +267,25 @@ export default function BulkChapterPage() {
               size={48}
               className="mx-auto mb-4 text-[var(--color-muted-foreground)]"
             />
-            <p className="font-medium mb-1">
-              Markdownファイルをドラッグ&ドロップ
-            </p>
-            <p className="text-sm text-[var(--color-muted-foreground)]">
-              またはクリックしてファイルを選択（.md / .txt）
-            </p>
+            {uploadMode === "folder" ? (
+              <>
+                <p className="font-medium mb-1">フォルダを選択</p>
+                <p className="text-sm text-[var(--color-muted-foreground)]">
+                  目次ファイル（index.md）と各話のファイルを含むフォルダ
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="font-medium mb-1">
+                  Markdownファイルをドラッグ&ドロップ
+                </p>
+                <p className="text-sm text-[var(--color-muted-foreground)]">
+                  またはクリックしてファイルを選択（.md / .txt）
+                </p>
+              </>
+            )}
+
+            {/* 単一ファイル用input */}
             <input
               ref={fileInputRef}
               type="file"
@@ -173,29 +293,66 @@ export default function BulkChapterPage() {
               onChange={handleFileSelect}
               className="hidden"
             />
+            {/* フォルダ用input */}
+            <input
+              ref={folderInputRef}
+              type="file"
+              /* @ts-expect-error webkitdirectory is non-standard */
+              webkitdirectory=""
+              directory=""
+              multiple
+              onChange={handleFileSelect}
+              className="hidden"
+            />
           </div>
 
           {/* フォーマット説明 */}
           <div className="mt-6 p-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)]">
-            <h3 className="text-sm font-medium mb-2">Markdownフォーマット</h3>
-            <pre className="text-xs text-[var(--color-muted-foreground)] font-mono whitespace-pre-wrap">
-              {`# 第1話 旅立ちの日
+            {uploadMode === "folder" ? (
+              <>
+                <h3 className="text-sm font-medium mb-3">
+                  フォルダ構成の例
+                </h3>
+                <pre className="text-xs text-[var(--color-muted-foreground)] font-mono whitespace-pre-wrap mb-3">
+                  {`my-novel/
+  index.md      ← 目次ファイル（必須）
+  chapter01.md  ← 各話の本文
+  chapter02.md
+  chapter03.md`}
+                </pre>
+                <h3 className="text-sm font-medium mb-2">
+                  目次ファイル（index.md）の書き方
+                </h3>
+                <pre className="text-xs text-[var(--color-muted-foreground)] font-mono whitespace-pre-wrap">
+                  {`chapter01.md 旅立ちの日
+chapter02.md 出会い
+chapter03.md 森の中で`}
+                </pre>
+                <p className="text-xs text-[var(--color-muted-foreground)] mt-2">
+                  各行に「ファイル名（スペース）タイトル」を記述します。
+                  目次の順番がそのまま話数の順番になります。
+                </p>
+              </>
+            ) : (
+              <>
+                <h3 className="text-sm font-medium mb-2">
+                  Markdownフォーマット
+                </h3>
+                <pre className="text-xs text-[var(--color-muted-foreground)] font-mono whitespace-pre-wrap">
+                  {`# 第1話 旅立ちの日
 
 ここに第1話の本文を書く...
 独自記法（ルビ・傍点等）もそのまま使えます。
 
 # 第2話 出会い
 
-ここに第2話の本文を書く...
-
-# 森の中で
-
-「第○話」の番号部分は省略可能。
-タイトルのみでもOKです。`}
-            </pre>
-            <p className="text-xs text-[var(--color-muted-foreground)] mt-2">
-              「# 」（H1見出し）で各話を区切ります。
-            </p>
+ここに第2話の本文を書く...`}
+                </pre>
+                <p className="text-xs text-[var(--color-muted-foreground)] mt-2">
+                  「# 」（H1見出し）で各話を区切ります。
+                </p>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -209,19 +366,15 @@ export default function BulkChapterPage() {
                 {parseResult.chapters.length}話が見つかりました
               </h2>
               <p className="text-sm text-[var(--color-muted-foreground)]">
-                <FileText size={12} className="inline mr-1" />
-                {fileName}
+                <FolderOpen size={12} className="inline mr-1" />
+                {sourceName}
               </p>
             </div>
             <button
-              onClick={() => {
-                setStep("upload");
-                setParseResult(null);
-                if (fileInputRef.current) fileInputRef.current.value = "";
-              }}
+              onClick={resetUpload}
               className="text-sm text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)]"
             >
-              別のファイルを選択
+              やり直す
             </button>
           </div>
 
@@ -311,7 +464,10 @@ export default function BulkChapterPage() {
       {step === "done" && (
         <div className="text-center py-16">
           <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto mb-4">
-            <BookOpen size={32} className="text-green-600 dark:text-green-400" />
+            <BookOpen
+              size={32}
+              className="text-green-600 dark:text-green-400"
+            />
           </div>
           <h2 className="text-xl font-bold mb-2">
             {createdCount}話を下書き保存しました
@@ -322,9 +478,7 @@ export default function BulkChapterPage() {
           <div className="flex gap-3 justify-center">
             <button
               onClick={() =>
-                router.push(
-                  `/dashboard/novels/${params.id}/chapters`
-                )
+                router.push(`/dashboard/novels/${params.id}/chapters`)
               }
               className="px-6 py-2.5 rounded-lg bg-[var(--color-primary)] text-white font-medium hover:opacity-90"
             >
