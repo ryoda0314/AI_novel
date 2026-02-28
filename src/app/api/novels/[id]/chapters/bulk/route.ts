@@ -43,36 +43,29 @@ export async function POST(
     }
   }
 
-  // トランザクションで一括作成
-  const created = await prisma.$transaction(async (tx) => {
-    const lastChapter = await tx.chapter.findFirst({
-      where: { novelId: id },
-      orderBy: { chapterNum: "desc" },
-    });
+  // 最後の話数を取得
+  const lastChapter = await prisma.chapter.findFirst({
+    where: { novelId: id },
+    orderBy: { chapterNum: "desc" },
+  });
 
-    const startNum = (lastChapter?.chapterNum || 0) + 1;
+  const startNum = (lastChapter?.chapterNum || 0) + 1;
 
-    const results = [];
-    for (let i = 0; i < chapters.length; i++) {
-      const chapter = await tx.chapter.create({
-        data: {
-          title: chapters[i].title.trim(),
-          content: chapters[i].content.trim(),
-          chapterNum: startNum + i,
-          novelId: id,
-          publishedAt: null,
-        },
-        select: {
-          id: true,
-          title: true,
-          chapterNum: true,
-          publishedAt: true,
-        },
-      });
-      results.push(chapter);
-    }
-
-    return results;
+  // 一括作成
+  const created = await prisma.chapter.createManyAndReturn({
+    data: chapters.map((ch: { title: string; content: string }, i: number) => ({
+      title: ch.title.trim(),
+      content: ch.content.trim(),
+      chapterNum: startNum + i,
+      novelId: id,
+      publishedAt: null,
+    })),
+    select: {
+      id: true,
+      title: true,
+      chapterNum: true,
+      publishedAt: true,
+    },
   });
 
   return NextResponse.json(
