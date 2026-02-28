@@ -49,7 +49,10 @@ export async function GET(
   for (const chapter of novel.chapters) {
     lines.push(`# ${chapter.title}`);
     lines.push("");
-    lines.push(chapter.content);
+    // コンテンツ先頭の # 見出し行を除去（エクスポート時に重複するため）
+    let body = chapter.content;
+    body = body.replace(/^\s*#\s+.+\r?\n\s*/, "");
+    lines.push(body);
     lines.push("");
   }
 
