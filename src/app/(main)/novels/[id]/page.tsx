@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { Eye, BookOpen, Clock, PlayCircle, Library, Download } from "lucide-react";
+import { Eye, BookOpen, Clock, PlayCircle, Library, Download, FileDown } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { formatDate, getStatusLabel, getStatusColor, estimateReadingTime } from "@/lib/utils";
 import { LikeButton } from "@/components/interactions/like-button";
@@ -195,12 +195,20 @@ export default function NovelDetailPage() {
                 initialCount={bookmarkData.count}
               />
               {novel.chapters.length > 0 && (
-                <a
-                  href={`/api/novels/${novel.id}/export`}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--color-border)] text-sm text-[var(--color-muted-foreground)] hover:bg-[var(--color-muted)] transition-colors"
-                >
-                  <Download size={14} /> EPUB
-                </a>
+                <>
+                  <a
+                    href={`/api/novels/${novel.id}/export-novel`}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--color-border)] text-sm text-[var(--color-muted-foreground)] hover:bg-[var(--color-muted)] transition-colors"
+                  >
+                    <FileDown size={14} /> .novel
+                  </a>
+                  <a
+                    href={`/api/novels/${novel.id}/export`}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--color-border)] text-sm text-[var(--color-muted-foreground)] hover:bg-[var(--color-muted)] transition-colors"
+                  >
+                    <Download size={14} /> EPUB
+                  </a>
+                </>
               )}
               <ShareButtons title={novel.title} />
               <ReportButton targetType="novel" targetId={novel.id} />
