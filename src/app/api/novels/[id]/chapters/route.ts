@@ -4,14 +4,30 @@ import { NextResponse } from "next/server";
 import { notifyFollowers } from "@/lib/notifications";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const url = new URL(request.url);
+  const includeDrafts = url.searchParams.get("includeDrafts") === "true";
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const where: any = { novelId: id };
+
+  if (includeDrafts) {
+    const session = await auth();
+    const novel = await prisma.novel.findUnique({ where: { id } });
+    if (!novel || novel.authorId !== session?.user?.id) {
+      where.publishedAt = { not: null, lte: new Date() };
+    }
+  } else {
+    where.publishedAt = { not: null, lte: new Date() };
+  }
+
   const chapters = await prisma.chapter.findMany({
-    where: { novelId: id, publishedAt: { not: null, lte: new Date() } },
+    where,
     orderBy: { chapterNum: "asc" },
-    select: { id: true, title: true, chapterNum: true, publishedAt: true, createdAt: true },
+    select: { id: true, title: true, chapterNum: true, publishedAt: true, createdAt: true, updatedAt: true },
   });
 
   return NextResponse.json(chapters);

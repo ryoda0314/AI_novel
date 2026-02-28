@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { Plus, Edit, Trash2, Heart, Eye, BookOpen, BarChart3, Library } from "lucide-react";
+import { Plus, Edit, Trash2, Heart, Eye, BookOpen, BarChart3, Library, Upload, List } from "lucide-react";
 import { getStatusLabel, getStatusColor, formatDate } from "@/lib/utils";
 import { NovelInlineText } from "@/components/novel/novel-inline-text";
 
@@ -99,10 +99,24 @@ export default function DashboardPage() {
 
               <div className="flex items-center gap-2 ml-4">
                 <Link
+                  href={`/dashboard/novels/${novel.id}/chapters`}
+                  className="p-1.5 rounded-lg hover:bg-[var(--color-muted)] text-[var(--color-muted-foreground)]"
+                  title="章管理"
+                >
+                  <List size={16} />
+                </Link>
+                <Link
                   href={`/dashboard/novels/${novel.id}/chapters/new`}
                   className="px-3 py-1.5 rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-muted)] text-xs"
                 >
                   新しい話
+                </Link>
+                <Link
+                  href={`/dashboard/novels/${novel.id}/chapters/bulk`}
+                  className="px-3 py-1.5 rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-muted)] text-xs flex items-center gap-1"
+                >
+                  <Upload size={12} />
+                  一括投稿
                 </Link>
                 <Link
                   href={`/dashboard/novels/${novel.id}/edit`}

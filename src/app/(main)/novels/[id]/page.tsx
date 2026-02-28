@@ -93,110 +93,119 @@ export default function NovelDetailPage() {
 
   return (
     <div className="max-w-3xl mx-auto">
-      {/* Cover Image */}
-      {novel.coverUrl && (
-        <div className="mb-6 rounded-xl overflow-hidden">
-          <img src={novel.coverUrl} alt={novel.title} className="w-full max-h-64 object-cover" />
-        </div>
-      )}
-
       {/* Header */}
       <div className="mb-8">
-        <div className="flex items-start justify-between gap-4 mb-3">
-          <h1 className="text-3xl font-bold">
-            <span className="text-lg text-[var(--color-muted-foreground)] font-normal mr-2">#{novel.serialNumber}</span>
-            <NovelInlineText text={novel.title} />
-          </h1>
-          <span className={`shrink-0 text-sm px-3 py-1 rounded-full ${getStatusColor(novel.status)}`}>
-            {getStatusLabel(novel.status)}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-4 text-sm text-[var(--color-muted-foreground)] mb-4">
-          <Link href={`/users/${novel.author.id}`} className="hover:text-[var(--color-primary)]">
-            作者: {novel.author.name}
-          </Link>
-          <span className="flex items-center gap-1">
-            <Eye size={14} /> {novel.viewCount}
-          </span>
-          <span className="flex items-center gap-1">
-            <BookOpen size={14} /> {novel.chapters.length}話
-          </span>
-          {novel.chapters.length > 0 && (
-            <span className="flex items-center gap-1">
-              <Clock size={14} /> {estimateReadingTime(novel.chapters.reduce((sum, ch) => sum + ch.charCount, 0))}
-            </span>
+        <div className={`flex ${novel.coverUrl ? "gap-6" : ""}`}>
+          {/* Cover Image - 縦長表紙 */}
+          {novel.coverUrl && (
+            <div className="w-40 shrink-0">
+              <img
+                src={novel.coverUrl}
+                alt={novel.title}
+                className="w-full rounded-lg border border-[var(--color-border)] shadow-sm"
+              />
+            </div>
           )}
-          <span className="flex items-center gap-1">
-            <Clock size={14} /> {formatDate(novel.createdAt)}
-          </span>
-        </div>
 
-        {/* Genres */}
-        {novel.genres.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-2">
-            {novel.genres.map(({ genre }) => (
-              <Link
-                key={genre.slug}
-                href={`/novels?genre=${genre.slug}`}
-                className="text-xs px-3 py-1 rounded-full bg-[var(--color-muted)] hover:bg-[var(--color-border)] transition-colors"
-              >
-                {genre.name}
+          {/* Meta Info */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-4 mb-3">
+              <h1 className="text-3xl font-bold">
+                <span className="text-lg text-[var(--color-muted-foreground)] font-normal mr-2">#{novel.serialNumber}</span>
+                <NovelInlineText text={novel.title} />
+              </h1>
+              <span className={`shrink-0 text-sm px-3 py-1 rounded-full ${getStatusColor(novel.status)}`}>
+                {getStatusLabel(novel.status)}
+              </span>
+            </div>
+
+            <div className="flex items-center flex-wrap gap-x-4 gap-y-1 text-sm text-[var(--color-muted-foreground)] mb-4">
+              <Link href={`/users/${novel.author.id}`} className="hover:text-[var(--color-primary)]">
+                作者: {novel.author.name}
               </Link>
-            ))}
-          </div>
-        )}
+              <span className="flex items-center gap-1">
+                <Eye size={14} /> {novel.viewCount}
+              </span>
+              <span className="flex items-center gap-1">
+                <BookOpen size={14} /> {novel.chapters.length}話
+              </span>
+              {novel.chapters.length > 0 && (
+                <span className="flex items-center gap-1">
+                  <Clock size={14} /> {estimateReadingTime(novel.chapters.reduce((sum, ch) => sum + ch.charCount, 0))}
+                </span>
+              )}
+              <span className="flex items-center gap-1">
+                <Clock size={14} /> {formatDate(novel.createdAt)}
+              </span>
+            </div>
 
-        {/* Tags */}
-        {novel.tags && novel.tags.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-4">
-            {novel.tags.map(({ tag }) => (
-              <Link
-                key={tag.id}
-                href={`/novels?tag=${encodeURIComponent(tag.name)}`}
-                className="text-xs px-3 py-1 rounded-full border border-[var(--color-primary)]/30 text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 transition-colors"
-              >
-                #{tag.name}
-              </Link>
-            ))}
-          </div>
-        )}
+            {/* Genres */}
+            {novel.genres.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-2">
+                {novel.genres.map(({ genre }) => (
+                  <Link
+                    key={genre.slug}
+                    href={`/novels?genre=${genre.slug}`}
+                    className="text-xs px-3 py-1 rounded-full bg-[var(--color-muted)] hover:bg-[var(--color-border)] transition-colors"
+                  >
+                    {genre.name}
+                  </Link>
+                ))}
+              </div>
+            )}
 
-        {/* Series */}
-        {novel.series && (
-          <div className="mb-4">
-            <Link
-              href={`/series/${novel.series.id}`}
-              className="inline-flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-muted)] transition-colors"
-            >
-              <Library size={14} />
-              シリーズ: {novel.series.title}
-            </Link>
-          </div>
-        )}
+            {/* Tags */}
+            {novel.tags && novel.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-4">
+                {novel.tags.map(({ tag }) => (
+                  <Link
+                    key={tag.id}
+                    href={`/novels?tag=${encodeURIComponent(tag.name)}`}
+                    className="text-xs px-3 py-1 rounded-full border border-[var(--color-primary)]/30 text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 transition-colors"
+                  >
+                    #{tag.name}
+                  </Link>
+                ))}
+              </div>
+            )}
 
-        {/* Like & Bookmark & Download buttons */}
-        <div className="flex items-center gap-3">
-          <LikeButton
-            novelId={novel.id}
-            initialLiked={likeData.liked}
-            initialCount={likeData.count}
-          />
-          <BookmarkButton
-            novelId={novel.id}
-            initialBookmarked={bookmarkData.bookmarked}
-            initialCount={bookmarkData.count}
-          />
-          {novel.chapters.length > 0 && (
-            <a
-              href={`/api/novels/${novel.id}/export`}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--color-border)] text-sm text-[var(--color-muted-foreground)] hover:bg-[var(--color-muted)] transition-colors"
-            >
-              <Download size={14} /> EPUB
-            </a>
-          )}
-          <ShareButtons title={novel.title} />
-          <ReportButton targetType="novel" targetId={novel.id} />
+            {/* Series */}
+            {novel.series && (
+              <div className="mb-4">
+                <Link
+                  href={`/series/${novel.series.id}`}
+                  className="inline-flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-muted)] transition-colors"
+                >
+                  <Library size={14} />
+                  シリーズ: {novel.series.title}
+                </Link>
+              </div>
+            )}
+
+            {/* Like & Bookmark & Download buttons */}
+            <div className="flex items-center flex-wrap gap-3">
+              <LikeButton
+                novelId={novel.id}
+                initialLiked={likeData.liked}
+                initialCount={likeData.count}
+              />
+              <BookmarkButton
+                novelId={novel.id}
+                initialBookmarked={bookmarkData.bookmarked}
+                initialCount={bookmarkData.count}
+              />
+              {novel.chapters.length > 0 && (
+                <a
+                  href={`/api/novels/${novel.id}/export`}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--color-border)] text-sm text-[var(--color-muted-foreground)] hover:bg-[var(--color-muted)] transition-colors"
+                >
+                  <Download size={14} /> EPUB
+                </a>
+              )}
+              <ShareButtons title={novel.title} />
+              <ReportButton targetType="novel" targetId={novel.id} />
+            </div>
+          </div>
         </div>
       </div>
 
