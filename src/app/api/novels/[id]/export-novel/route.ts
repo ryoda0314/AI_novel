@@ -47,12 +47,17 @@ export async function GET(
 
   // 各章
   for (const chapter of novel.chapters) {
-    lines.push(`# ${chapter.title}`);
-    lines.push("");
-    // コンテンツ先頭の # 見出し行を除去（エクスポート時に重複するため）
     let body = chapter.content;
-    body = body.replace(/^\s*#\s+.+\r?\n\s*/, "");
-    lines.push(body);
+    // コンテンツ先頭に # 見出しがあればそれを章タイトルとして使う
+    const headingMatch = body.match(/^\s*#\s+(.+?)[\r\n]/);
+    if (headingMatch) {
+      lines.push(`# ${headingMatch[1].trim()}`);
+      body = body.slice(headingMatch[0].length);
+    } else {
+      lines.push(`# ${chapter.title}`);
+    }
+    lines.push("");
+    lines.push(body.trimStart());
     lines.push("");
   }
 
