@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Search, Menu, X, BookOpen, PenTool, User, LogOut, LayoutDashboard, Bookmark, Shield, MessageSquare } from "lucide-react";
+import { Search, Menu, X, BookOpen, PenTool, User, LogOut, LayoutDashboard, Bookmark, Shield, MessageSquare, Download } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { NotificationBell } from "@/components/interactions/notification-bell";
 
@@ -46,6 +46,10 @@ export function Header() {
             </Link>
             <Link href="/guide" className="hover:text-[var(--color-primary)] transition-colors">
               記法ガイド
+            </Link>
+            <Link href="/download" className="inline-flex items-center gap-1.5 hover:text-[var(--color-primary)] transition-colors">
+              <Download size={15} />
+              リーダー
             </Link>
           </nav>
 
@@ -218,6 +222,14 @@ export function Header() {
                 className="px-3 py-2 rounded hover:bg-[var(--color-muted)] transition-colors"
               >
                 記法ガイド
+              </Link>
+              <Link
+                href="/download"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-2 px-3 py-2 rounded hover:bg-[var(--color-muted)] transition-colors"
+              >
+                <Download size={16} />
+                デスクトップリーダー
               </Link>
             </nav>
           </div>
