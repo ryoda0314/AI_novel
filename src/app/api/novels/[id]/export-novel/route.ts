@@ -45,19 +45,9 @@ export async function GET(
   lines.push("---");
   lines.push("");
 
-  // 各章
+  // 各章（コンテンツをそのまま連結 — 既に # 見出しが含まれている）
   for (const chapter of novel.chapters) {
-    let body = chapter.content;
-    // コンテンツ先頭に # 見出しがあればそれを章タイトルとして使う
-    const headingMatch = body.match(/^\s*#\s+(.+?)[\r\n]/);
-    if (headingMatch) {
-      lines.push(`# ${headingMatch[1].trim()}`);
-      body = body.slice(headingMatch[0].length);
-    } else {
-      lines.push(`# ${chapter.title}`);
-    }
-    lines.push("");
-    lines.push(body.trimStart());
+    lines.push(chapter.content);
     lines.push("");
   }
 
